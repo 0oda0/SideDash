@@ -42,3 +42,5 @@ repo/
 ### SideDash ###
 *-log.txt
 modpack/*.zip
+hub/bin/
+hub/obj/

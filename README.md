@@ -22,15 +22,18 @@ First game: **Minecraft 1.21.1 (NeoForge)**, built for Create.
 - **Recipes (JEI)**: search any item, then see "how to make" and "used in". Recipes are drawn by JEI itself, so every Create and addon recipe type is supported.
 - The UI follows the game's language (Russian or English).
 
+## How it works
+
+SideDash has two parts:
+
+- **SideDash Hub**: a small Windows app you install once. It lives in the tray, shows a QR code for the tablet, and serves everything on your LAN (`http://<pc-ip>:25580/<key>/`). The random key keeps other devices on the network out.
+- **Game adapters**: one per game. They run a localhost-only server and register with the hub through a file in `%LOCALAPPDATA%\SideDash\sources`. Each adapter ships its own dashboard page, and the hub proxies the tablet to it. For Minecraft the adapter is the SideDash mod (client-only: singleplayer and any server).
+
 ## How to use
 
-1. Install the mod (or the modpack below) and start a world.
-2. Chat shows a link like `http://192.168.1.5:25580/k3x9ab/`. Open it on a tablet or phone on the **same Wi-Fi**. You can also show the link again with `/sidedash`.
-3. Tip: add the page to the home screen and turn off auto-lock while playing.
-
-The random part of the URL is a key, so other devices on the network can't read your game. Port and key live in `config/sidedash.properties`.
-
-The mod is **client-only**. It works in singleplayer and on any server (it only reads what your own client sees).
+1. Start **SideDashHub.exe**. Allow it in Windows Firewall when asked (private networks).
+2. Scan the QR code from the hub window with your tablet (same Wi-Fi).
+3. Start Minecraft with the mod and join a world. The tablet switches to the game by itself. `/sidedash` in chat shows the address again.
 
 ## Modpack (CurseForge)
 
@@ -54,7 +57,8 @@ Left out on purpose:
 - JDK 21. `./gradlew runClient` starts a dev client; put test mods in `run/mods`.
 - `./gradlew runClient -PquickWorld=<save folder>` loads a world directly.
 - Code map:
-  - `WebServer`: tiny HTTP server, java.base only. Live data goes over Server-Sent Events.
+  - `hub/`: .NET 9 tray app (Kestrel + WinForms): LAN server, QR, adapter registry, reverse proxy.
+  - `WebServer`: the mod's tiny localhost HTTP server, java.base only. Live data goes over Server-Sent Events.
   - `GameData`: all game reads, always run on the client thread.
   - `Render`: offscreen render to PNG, used for icons and recipes.
   - `SideDashJei`: optional JEI bridge.
@@ -63,4 +67,3 @@ Left out on purpose:
 ## Roadmap
 
 - More games: Baldur's Gate 3 (journal and inventory through Script Extender), Green Hell (stats through a BepInEx mod).
-- A desktop hub, once a second game exists.

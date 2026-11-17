@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e1215">
+<title>SideDash</title>
+<style>
+:root { --bg: #0e1215; --panel: #161c21; --line: #2a343d; --text: #e7edf2; --dim: #8796a3; --accent: #5fd3a8; }
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font: 16px/1.4 system-ui, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 720px; margin: 0 auto; padding: 48px 16px; }
+h1 { font-size: 28px; margin: 0 0 4px; }
+p { color: var(--dim); margin: 0 0 28px; }
+.games { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+a.game { display: block; padding: 22px 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+  color: var(--text); text-decoration: none; font-size: 20px; font-weight: 600; }
+a.game:hover, a.game:focus { border-color: var(--accent); }
+a.game span { display: block; font-size: 13px; color: var(--accent); font-weight: 500; margin-top: 6px; }
+.empty { padding: 28px; border: 1px dashed var(--line); border-radius: 14px; color: var(--dim); text-align: center; }
+</style>
+</head>
+<body>
+<main>
+  <h1>SideDash</h1>
+  <p id="sub">Второй экран для игр</p>
+  <div class="games" id="games"></div>
+</main>
+<script>
+// One running game -> open it straight away (unless the user came back here on purpose).
+const stay = new URLSearchParams(location.search).has("stay");
+async function poll() {
+  let list = [];
+  try { list = await (await fetch("sources")).json(); } catch {}
+  if (list.length === 1 && !stay) { location.replace("g/" + encodeURIComponent(list[0].id) + "/"); return; }
+  document.getElementById("games").innerHTML = list.length
+    ? list.map(s => `<a class="game" href="g/${encodeURIComponent(s.id)}/">${s.name.replace(/</g, "&lt;")}<span>● в игре</span></a>`).join("")
+    : `<div class="empty">Ни одна игра не подключена.<br>Запусти игру с адаптером SideDash, страница откроется сама.</div>`;
+}
+poll();
+setInterval(poll, 2000);
+</script>
+</body>
+</html>

@@ -18,18 +18,27 @@ import java.nio.charset.StandardCharsets;
 final class WebServer {
     private static final byte[] NOT_FOUND = "not found".getBytes(StandardCharsets.UTF_8);
 
-    static void start(int port, String key) {
+/** Listens on 127.0.0.1, random free port; only the hub on this PC talks to us. Returns the port, or -1. */
+    static int start(String key) {
+        ServerSocket ss;
+        try {
+            ss = new ServerSocket(0, 50, java.net.InetAddress.getByName("127.0.0.1"));
+        } catch (IOException e) {
+            SideDash.LOG.error("SideDash: can't open local server", e);
+            return -1;
+        }
         Thread.ofPlatform().daemon().name("SideDash-http").start(() -> {
-            try (ServerSocket ss = new ServerSocket(port)) {
-                SideDash.LOG.info("SideDash listening on port {}", port);
+            try (ss) {
                 while (true) {
                     Socket s = ss.accept();
                     Thread.ofVirtual().start(() -> handle(s, key));
                 }
             } catch (IOException e) {
-                SideDash.LOG.error("SideDash: can't listen on port {} (busy? change it in config/sidedash.properties)", port, e);
+                SideDash.LOG.error("SideDash: local server stopped", e);
             }
         });
+        SideDash.LOG.info("SideDash listening on 127.0.0.1:{}", ss.getLocalPort());
+        return ss.getLocalPort();
     }
 
     private static void handle(Socket s, String key) {
@@ -109,7 +118,7 @@ final class WebServer {
     private static void events(Socket s, OutputStream out) throws Exception {
         s.setSoTimeout(0);
         out.write(("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nCache-Control: no-cache\r\n"
-                + "Access-Control-Allow-Origin: *\r\nConnection: keep-alive\r\n\r\n").getBytes(StandardCharsets.UTF_8));
+                + "Connection: keep-alive\r\n\r\n").getBytes(StandardCharsets.UTF_8));
         out.flush();
         String last = null;
         long lastWrite = 0;

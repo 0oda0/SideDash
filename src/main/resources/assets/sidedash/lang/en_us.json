@@ -1,3 +1,4 @@
 {
-  "sidedash.open": "open the dashboard on your tablet (same Wi-Fi):"
+  "sidedash.open": "open the dashboard on your tablet (same Wi-Fi):",
+  "sidedash.noHub": "install and start SideDash Hub on this PC to use the tablet dashboard:"
 }
