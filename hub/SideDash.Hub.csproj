@@ -15,6 +15,9 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="QRCoder" Version="1.6.0" />
     <EmbeddedResource Include="home.html" />
+    <EmbeddedResource Include="hub.js" />
+    <EmbeddedResource Include="deck.html" />
+    <EmbeddedResource Include="NoSleep.min.js" />
   </ItemGroup>
 
 </Project>

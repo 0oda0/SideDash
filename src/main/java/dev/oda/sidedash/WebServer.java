@@ -78,6 +78,15 @@ final class WebServer {
                 if (b == null) send(out, 204, "image/png", new byte[0], "Cache-Control: no-store\r\n");
                 else send(out, 200, "image/png", b, "Cache-Control: no-cache\r\n");
             }
+            else if (method.equals("POST") && path.equals("/inv/click")) {
+                GameData.click(intParam(query, "m", -1), param(query, "type"), intParam(query, "b", -1));
+                send(out, 204, "text/plain", new byte[0], "");
+            }
+            else if (path.equals("/deck/actions")) json(out, Deck.actions());
+            else if (method.equals("POST") && path.equals("/deck/run")) {
+                Deck.run(java.net.URLDecoder.decode(param(query, "id"), StandardCharsets.UTF_8));
+                send(out, 204, "text/plain", new byte[0], "");
+            }
             else if (path.equals("/waypoints")) json(out, WorldMap.waypointsJson());
             else if (method.equals("POST") && path.equals("/waypoint/add")) {
                 WorldMap.addWaypoint(java.net.URLDecoder.decode(param(query, "name"), StandardCharsets.UTF_8),

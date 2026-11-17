@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e1215">
+<title>SideDash · Пульт</title>
+<style>
+:root { --bg: #0e1215; --panel: #161c21; --panel2: #1d252c; --line: #2a343d; --text: #e7edf2; --dim: #8796a3; --accent: #5fd3a8; --bad: #f07178; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font: 16px/1.35 system-ui, "Segoe UI", Roboto, sans-serif; user-select: none; }
+header { display: flex; gap: 10px; align-items: center; padding: 14px 16px; }
+header h1 { font-size: 20px; margin: 0; flex: 1; }
+button, input { font: inherit; color: var(--text); background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; }
+button.on { border-color: var(--accent); color: var(--accent); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; padding: 4px 16px 24px; }
+.btn { aspect-ratio: 1.4; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center; padding: 10px; cursor: pointer; transition: transform .08s, border-color .2s; }
+.btn:active { transform: scale(.95); border-color: var(--accent); }
+.btn b { font-size: 17px; }
+.btn small { color: var(--dim); margin-top: 6px; font-size: 12px; }
+.btn.flash { border-color: var(--accent); }
+.edit .btn:not(.add) { border-color: var(--bad); border-style: dashed; }
+.btn.add { border-style: dashed; color: var(--accent); font-size: 32px; }
+.empty { color: var(--dim); padding: 24px 16px; }
+#panel { position: fixed; inset: 0; background: #000a; display: none; align-items: center; justify-content: center; padding: 16px; }
+#panel.show { display: flex; }
+.sheet { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; width: min(640px, 100%); max-height: 90vh; display: flex; flex-direction: column; padding: 16px; gap: 12px; }
+.row { display: flex; gap: 8px; }
+.row input { flex: 1; min-width: 0; }
+h3 { margin: 4px 0 0; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); }
+.list { overflow: auto; min-height: 120px; display: flex; flex-direction: column; gap: 4px; }
+.list div { padding: 10px 12px; background: var(--panel2); border-radius: 10px; cursor: pointer; display: flex; gap: 10px; }
+.list div span { margin-left: auto; color: var(--dim); font-size: 13px; }
+.list .g { background: none; color: var(--accent); font-size: 12px; padding: 8px 4px 2px; cursor: default; }
+</style>
+</head>
+<body>
+<header>
+  <button id="back">←</button>
+  <h1>Пульт</h1>
+  <button id="editBtn">Изменить</button>
+</header>
+<div class="grid" id="grid"></div>
+<div id="panel"><div class="sheet">
+  <div class="row"><b style="flex:1;align-self:center">Новая кнопка</b><button id="close">✕</button></div>
+  <h3 id="gameTitle">Действия игры</h3>
+  <input id="search" placeholder="Поиск…">
+  <div class="list" id="actions"></div>
+  <h3>Сочетание клавиш (любая игра)</h3>
+  <div class="row"><input id="combo" placeholder="Например: F5, Ctrl+Z, Shift+Tab"><button id="addCombo">Добавить</button></div>
+  <h3 id="cmdTitle">Команда или сообщение в чат</h3>
+  <div class="row" id="cmdRow"><input id="cmd" placeholder="/time set day"><button id="addCmd">Добавить</button></div>
+</div></div>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const game = new URLSearchParams(location.search).get("game") || "";
+const api = game ? `../g/${encodeURIComponent(game)}/deck/` : null;
+let layout = [], actions = [], editing = false;
+
+const DEFAULTS = {
+  minecraft: [["key:key.screenshot"], ["key:key.togglePerspective"], ["key:key.playerlist"],
+    ["cmd:/time set day", "День"], ["cmd:/weather clear", "Ясно"]]
+};
+
+$("back").onclick = () => location.href = game ? `../g/${encodeURIComponent(game)}/` : "../?stay";
+$("editBtn").onclick = () => { editing = !editing; $("editBtn").classList.toggle("on", editing); draw(); };
+$("close").onclick = () => $("panel").classList.remove("show");
+
+function draw() {
+  document.body.classList.toggle("edit", editing);
+  const tiles = layout.map((b, i) => `<div class="btn" data-i="${i}"><b>${esc(b.label)}</b><small>${esc(b.hint || "")}</small></div>`);
+  if (editing) tiles.push(`<div class="btn add" id="add">+</div>`);
+  $("grid").innerHTML = tiles.join("") || `<div class="empty">Кнопок пока нет. Нажми «Изменить», затем «+».</div>`;
+  const add = $("add"); if (add) add.onclick = openPanel;
+}
+
+$("grid").addEventListener("click", async e => {
+  const el = e.target.closest(".btn[data-i]"); if (!el) return;
+  const b = layout[+el.dataset.i];
+  if (editing) {
+    if (confirm(`Удалить кнопку «${b.label}»?`)) { layout.splice(+el.dataset.i, 1); save(); draw(); }
+    return;
+  }
+  el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 250);
+  if (navigator.vibrate) navigator.vibrate(20);
+  if (b.type === "key") await fetch("key?combo=" + encodeURIComponent(b.id), { method: "POST" });
+  else await fetch(api + "run?id=" + encodeURIComponent(b.id), { method: "POST" });
+});
+
+function save() { fetch("layout/" + encodeURIComponent(game || "pc"), { method: "PUT", body: JSON.stringify(layout) }); }
+function push(b) { layout.push(b); save(); draw(); $("panel").classList.remove("show"); }
+
+function openPanel() {
+  $("panel").classList.add("show");
+  $("gameTitle").hidden = $("search").hidden = $("actions").hidden = !api;
+  $("cmdTitle").hidden = $("cmdRow").hidden = !api;
+  $("search").value = ""; drawActions();
+}
+function drawActions() {
+  const q = $("search").value.toLowerCase();
+  let html = "", group = null;
+  for (const a of actions) {
+    if (q && !(a.label + " " + a.group).toLowerCase().includes(q)) continue;
+    if (a.group !== group) { group = a.group; html += `<div class="g">${esc(group)}</div>`; }
+    html += `<div data-id="${esc(a.id)}">${esc(a.label)}<span>${esc(a.bound || "")}</span></div>`;
+  }
+  $("actions").innerHTML = html;
+}
+$("search").oninput = drawActions;
+$("actions").addEventListener("click", e => {
+  const d = e.target.closest("[data-id]"); if (!d) return;
+  const a = actions.find(x => x.id === d.dataset.id);
+  push({ type: "game", id: a.id, label: a.label, hint: a.bound });
+});
+$("addCombo").onclick = () => {
+  const c = $("combo").value.trim(); if (!c) return;
+  push({ type: "key", id: c, label: prompt("Подпись кнопки", c) || c, hint: c });
+  $("combo").value = "";
+};
+$("addCmd").onclick = () => {
+  const c = $("cmd").value.trim(); if (!c) return;
+  push({ type: "game", id: "cmd:" + c, label: prompt("Подпись кнопки", c) || c, hint: c });
+  $("cmd").value = "";
+};
+
+(async () => {
+  if (api) try { actions = await (await fetch(api + "actions")).json(); } catch {}
+  try { layout = await (await fetch("layout/" + encodeURIComponent(game || "pc"))).json(); } catch {}
+  if (!layout) {  // first time: a few useful buttons
+    layout = (DEFAULTS[game] || []).map(([id, label]) => {
+      const a = actions.find(x => x.id === id);
+      return { type: "game", id, label: label || (a ? a.label : id), hint: a ? a.bound : id.replace(/^cmd:/, "") };
+    });
+    save();
+  }
+  draw();
+})();
+</script>
+</body>
+</html>

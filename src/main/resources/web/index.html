@@ -90,6 +90,8 @@ h2 { margin: 0 0 10px; font-size: 12px; letter-spacing: .08em; text-transform: u
 .pop .acts { display: flex; gap: 8px; }
 .me svg { transition: transform .2s; }
 .wp i { display: block; width: 14px; height: 14px; border-radius: 50%; background: var(--absorb); border: 2px solid #000; }
+.wp.death i { background: var(--hp); }
+.wp.player i { background: var(--air); border-radius: 3px; }
 .wp span { position: absolute; left: 18px; top: -3px; white-space: nowrap; font: 600 13px system-ui, sans-serif; color: #fff;
   text-shadow: 0 0 3px #000, 0 0 3px #000; }
 .target .h { display: flex; gap: 10px; align-items: center; }
@@ -169,6 +171,10 @@ input[type=search]:focus { border-color: var(--accent); }
   </section>
 
   <section class="col" id="inventoryCol">
+    <div class="card" id="boxCard" hidden>
+      <h2 id="boxTitle"></h2>
+      <div class="grid" id="box"></div>
+    </div>
     <div class="card">
       <h2 data-t="inventory">Inventory</h2>
       <div class="inv">
@@ -219,11 +225,15 @@ const I18N = {
     noEffects: "Нет эффектов", overview: "Обзор", recipes: "Рецепты", howToMake: "Как сделать", usedIn: "Где используется",
     searchPh: "Поиск предмета…", pickItem: "Выбери предмет слева или тапни по нему в инвентаре.", noRecipes: "Рецептов не найдено",
     noJei: "Для рецептов нужен мод JEI", loading: "Загрузка…", addMark: "Метка здесь", markName: "Название метки:",
+    died: "Ты погиб — точка смерти на карте", lowHp: "Мало здоровья!", hungry: "Пора поесть", noAir: "Заканчивается воздух!",
+    quick: "Перекинуть", move: "Переложить", throw: "Выбросить", moveHint: "Тапни слот, куда переложить",
     tpHere: "Телепорт сюда", tp: "Телепорт", del: "Удалить", delQ: "Удалить метку", blocks: "блоков", clear: "Ясно", rain: "Дождь", thunder: "Гроза", nothing: "—" }
 };
 let lang = navigator.language.startsWith("ru") ? "ru" : "en";
 const t = k => (I18N[lang] && I18N[lang][k]) || ({ noRecipes: "No recipes found", noJei: "Recipes need the JEI mod installed", loading: "Loading…",
   howToMake: "How to make", usedIn: "Used in", addMark: "Mark here", markName: "Waypoint name:", tpHere: "Teleport here",
+  died: "You died — death point is on the map", lowHp: "Low health!", hungry: "Time to eat", noAir: "Running out of air!",
+  quick: "Shift-click", move: "Move", throw: "Drop", moveHint: "Tap the slot to move it to",
   tp: "Teleport", del: "Delete", delQ: "Delete waypoint", blocks: "blocks", noEffects: "No effects", clear: "Clear", rain: "Rain", thunder: "Thunder", nothing: "—" })[k] || k;
 function applyLang() {
   document.querySelectorAll("[data-t]").forEach(e => { const v = I18N[lang][e.dataset.t]; if (v) e.textContent = v; });
@@ -256,33 +266,77 @@ function renderSlot(i, it) {
   d.title = it.name;
 }
 
+// Selection: a player-inventory slot (data-s) or a slot of an open chest (data-m). Actions use menu indexes (m).
+let pickedEl = null, pickedItem = null, pickedM = -1, moving = -1;
+const menuOf = d => d.dataset.m != null ? +d.dataset.m : (state && state.slotMap ? state.slotMap[+d.dataset.s] : -1);
+const click = (m, type, b = -1) => fetch(`inv/click?m=${m}&type=${type}&b=${b}`, { method: "POST" });
+const actsHtml = () => `<div class="acts">
+  <button data-act="quick">${t("quick")}</button><button data-act="move">${t("move")}</button><button data-act="throw">${t("throw")}</button>
+  <button data-open="craft">${t("howToMake")}</button><button data-open="uses">${t("usedIn")}</button></div>`;
+
 document.querySelector("main").addEventListener("click", async e => {
   const ob = e.target.closest("[data-open]");
-  if (ob) { const it = state && state.inv.find(x => x.s === picked); if (it) { showView("recipes"); openRecipes(it.id, it.name, ob.dataset.open); } return; }
+  if (ob) { if (pickedItem) { showView("recipes"); openRecipes(pickedItem.id, pickedItem.name, ob.dataset.open); } return; }
+  const act = e.target.closest("[data-act]");
+  if (act) {
+    if (act.dataset.act === "move") { moving = pickedM; $("tip").innerHTML = `<span class="l">${t("moveHint")}</span>`; return; }
+    click(pickedM, act.dataset.act);
+    return;
+  }
   const d = e.target.closest(".slot"); if (!d) return;
-  const i = +d.dataset.s;
-  if (i < 9 && picked === i) fetch("slot/" + i, { method: "POST" });  // second tap on a hotbar slot selects it
-  if (picked >= 0 && slots[picked]) slots[picked].classList.remove("pick");
-  picked = i; d.classList.add("pick");
-  const it = state && state.inv.find(x => x.s === i);
-  if (!it) { $("tip").innerHTML = `<span class="l">${t("nothing")}</span>`; return; }
-  $("tip").innerHTML = `<div class="h">${esc(it.name)}</div>`;
+  const m = menuOf(d);
+  if (moving >= 0) { if (m >= 0 && m !== moving) click(moving, "swap", m); moving = -1; }
+  const s = d.dataset.s != null ? +d.dataset.s : -1;
+  if (s >= 0 && s < 9 && pickedEl === d) fetch("slot/" + s, { method: "POST" });  // second tap on a hotbar slot selects it
+  if (pickedEl) pickedEl.classList.remove("pick");
+  pickedEl = d; pickedM = m; d.classList.add("pick");
+  pickedItem = s >= 0 ? state && state.inv.find(x => x.s === s) : state && state.container && state.container.items.find(x => x.m === m && x.id);
+  if (!pickedItem) { $("tip").innerHTML = `<span class="l">${t("nothing")}</span>`; return; }
+  $("tip").innerHTML = `<div class="h">${esc(pickedItem.name)}</div>` + actsHtml();
+  if (s < 0) return;  // tooltips only for own inventory
   try {
-    const lines = await (await fetch("tooltip/" + i)).json();
-    if (picked === i) $("tip").innerHTML = `<div class="h">${esc(lines[0] || it.name)}</div>` + lines.slice(1).map(l => `<div class="l">${esc(l)}</div>`).join("")
-      + `<div class="acts"><button data-open="craft">${t("howToMake")}</button><button data-open="uses">${t("usedIn")}</button></div>`;
+    const lines = await (await fetch("tooltip/" + s)).json();
+    if (pickedEl === d) $("tip").innerHTML = `<div class="h">${esc(lines[0] || pickedItem.name)}</div>`
+      + lines.slice(1).map(l => `<div class="l">${esc(l)}</div>`).join("") + actsHtml();
   } catch {}
 });
+
+// open chest / furnace / any container: its slots above the inventory
+let boxKey = "";
+function renderBox(c) {
+  $("boxCard").hidden = !c;
+  if (!c) { boxKey = ""; return; }
+  const key = JSON.stringify(c);
+  if (key === boxKey) return;
+  boxKey = key;
+  $("boxTitle").textContent = c.title;
+  $("box").innerHTML = c.items.map(it => `<div class="slot" data-m="${it.m}">${it.id ? `<img src="${iconUrl(it.id)}" alt="" title="${esc(it.name)}">`
+    + (it.n > 1 ? `<span class="n">${it.n}</span>` : "") : ""}</div>`).join("");
+}
 
 const pct = (v, m) => Math.max(0, Math.min(100, m ? v / m * 100 : 0)) + "%";
 const fmt = n => Math.round(n * 10) / 10;
 function dur(ticks) { if (ticks < 0) return "∞"; const s = Math.floor(ticks / 20); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+
+// warnings when a value crosses a threshold (not every update); SideDash.alert comes from the hub
+let prev = null;
+function alerts(s) {
+  const a = window.SideDash && window.SideDash.alert;
+  if (a && prev) {
+    if (s.hp <= 0 && prev.hp > 0) a(t("died"), "bad");
+    else if (s.hp > 0 && s.hp <= 6 && prev.hp > 6) a(t("lowHp"), "bad");
+    if (s.food <= 6 && prev.food > 6) a(t("hungry"), "warn");
+    if (s.air < s.maxAir * 0.3 && prev.air >= prev.maxAir * 0.3) a(t("noAir"), "bad");
+  }
+  prev = s;
+}
 
 function render(s) {
   state = s;
   $("offline").classList.toggle("show", !s.inGame);
   if (!s.inGame) return;
   updateMap(s);
+  alerts(s);
   const nl = (s.lang || "").startsWith("ru") ? "ru" : "en";
   if (nl !== lang) { lang = nl; applyLang(); }
 
@@ -313,6 +367,7 @@ function render(s) {
 
   const bySlot = {}; s.inv.forEach(it => bySlot[it.s] = it);
   for (const i in slots) { renderSlot(+i, bySlot[i]); slots[i].classList.toggle("sel", +i === s.selected); }
+  renderBox(s.container);
 
   const tg = s.target;
   $("target").innerHTML = !tg ? `<span class="empty">—</span>` :
@@ -358,7 +413,18 @@ function updateMap(s) {
   me.setLatLng(ll(s.x + .5, s.z + .5));
   const el = me.getElement(); if (el) el.firstChild.style.transform = `rotate(${s.yaw + 180}deg)`;
   if (follow) lmap.panTo(ll(s.x + .5, s.z + .5), { animate: false });
+  // other players: rebuilt only when the list changes
+  const key = JSON.stringify(s.players || []);
+  if (key !== playersKey) {
+    playersKey = key;
+    playerLayer.clearLayers();
+    for (const p of s.players || [])
+      L.marker(ll(p.x + .5, p.z + .5), { interactive: false, icon: L.divIcon({ className: "wp player", iconSize: [14, 14],
+        html: `<i></i><span>${esc(p.name)}</span>` }) }).addTo(playerLayer);
+  }
 }
+const playerLayer = L.layerGroup().addTo(lmap);
+let playersKey = "";
 // newly explored chunks: re-fetch the tiles around the player
 setInterval(() => {
   if (!state || !state.inGame || document.hidden) return;
@@ -392,7 +458,7 @@ lmap.on("click", e => {
 function drawWaypoints() {
   wpLayer.clearLayers();
   for (const w of waypoints.filter(w => w.dim === dim)) {
-    const m = L.marker(ll(w.x + .5, w.z + .5), { icon: L.divIcon({ className: "wp", iconSize: [14, 14],
+    const m = L.marker(ll(w.x + .5, w.z + .5), { icon: L.divIcon({ className: w.id === "death" ? "wp death" : "wp", iconSize: [14, 14],
       html: `<i></i><span>${esc(w.name)}</span>` }) }).addTo(wpLayer);
     m.on("click", ev => {
       L.DomEvent.stopPropagation(ev);

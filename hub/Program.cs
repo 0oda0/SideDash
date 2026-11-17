@@ -126,11 +126,29 @@ static class Program
         b.Logging.ClearProviders();
         var app = b.Build();
         string k = Cfg.Key;
-        string home = new StreamReader(typeof(Program).Assembly.GetManifestResourceStream("SideDash.Hub.home.html")!).ReadToEnd();
+        string home = Resource("home.html");
+        string hubJs = Resource("NoSleep.min.js") + "\n" + Resource("hub.js");
+        InjectTag = $"<script src=\"/{k}/hub.js\"></script>";
 
         // routing treats "/k" and "/k/" as one route; the page uses relative links, so it needs the slash
         app.MapGet($"/{k}", (HttpContext c) => c.Request.Path.Value!.EndsWith('/')
             ? Results.Content(home, "text/html; charset=utf-8") : Results.Redirect($"/{k}/"));
+        app.MapGet($"/{k}/hub.js", () => Results.Content(hubJs, "text/javascript; charset=utf-8"));
+
+        // stream deck: page, per-game button layout, OS-level key presses
+        string deck = Resource("deck.html");
+        app.MapGet($"/{k}/deck", (HttpContext c) => c.Request.Path.Value!.EndsWith('/')
+            ? Results.Content(deck, "text/html; charset=utf-8") : Results.Redirect($"/{k}/deck/" + c.Request.QueryString));
+        app.MapGet($"/{k}/deck/layout/{{game}}", (string game) =>
+            File.Exists(DeckFile(game)) ? Results.Text(File.ReadAllText(DeckFile(game)), "application/json") : Results.Text("null", "application/json"));
+        app.MapPut($"/{k}/deck/layout/{{game}}", async (string game, HttpRequest r) =>
+        {
+            using var doc = await JsonDocument.ParseAsync(r.Body);  // validate before saving
+            if (doc.RootElement.ValueKind != JsonValueKind.Array) return Results.BadRequest();
+            File.WriteAllText(DeckFile(game), doc.RootElement.GetRawText());
+            return Results.NoContent();
+        });
+        app.MapPost($"/{k}/deck/key", (string combo) => Keys2.Press(combo) ? Results.NoContent() : Results.BadRequest("unknown key"));
         app.MapGet($"/{k}/sources", () => Results.Json(LiveSources().Select(s => new { s.Id, s.Name })));
         app.Map($"/{k}/g/{{id}}/{{**rest}}", Proxy);
         app.MapFallback(() => Results.NotFound("not found"));
@@ -138,7 +156,16 @@ static class Program
         return app;
     }
 
-    /// <summary>Streams the request to the adapter and the response back (works for SSE too).</summary>
+    static string InjectTag = "";
+
+    static string DeckFile(string game) =>
+        Path.Combine(Dir, "deck-" + System.Text.RegularExpressions.Regex.Replace(game, "[^a-z0-9_-]", "_") + ".json");
+
+    static string Resource(string name) =>
+        new StreamReader(typeof(Program).Assembly.GetManifestResourceStream("SideDash.Hub." + name)!).ReadToEnd();
+
+    /// <summary>Streams the request to the adapter and the response back (works for SSE too).
+    /// HTML pages get the hub's shared script (keep-awake, alerts) injected.</summary>
     static async Task Proxy(HttpContext ctx, string id, string? rest)
     {
         var src = LiveSources().FirstOrDefault(s => s.Id == id);
@@ -150,6 +177,15 @@ static class Program
         {
             using var resp = await Http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ctx.RequestAborted);
             ctx.Response.StatusCode = (int)resp.StatusCode;
+            if (resp.Content.Headers.ContentType?.MediaType == "text/html")
+            {
+                var html = await resp.Content.ReadAsStringAsync(ctx.RequestAborted);
+                int at = html.LastIndexOf("</body>", StringComparison.OrdinalIgnoreCase);
+                html = at < 0 ? html + InjectTag : html.Insert(at, InjectTag);
+                ctx.Response.Headers.CacheControl = "no-cache";
+                await Results.Content(html, "text/html; charset=utf-8").ExecuteAsync(ctx);
+                return;
+            }
             foreach (var h in resp.Headers.Concat(resp.Content.Headers))
                 if (h.Key is not ("Transfer-Encoding" or "Connection")) ctx.Response.Headers[h.Key] = h.Value.ToArray();
             await using var body = await resp.Content.ReadAsStreamAsync(ctx.RequestAborted);

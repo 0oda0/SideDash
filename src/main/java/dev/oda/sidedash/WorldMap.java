@@ -60,6 +60,21 @@ final class WorldMap {
         });
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post e) -> tick());
         NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut e) -> closeWorld());
+        // respawn (and dimension change) recreates the player: keep a single "death" waypoint at the last death spot
+        NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.Clone e) ->
+                e.getNewPlayer().getLastDeathLocation().ifPresent(WorldMap::deathPoint));
+    }
+
+    private static void deathPoint(net.minecraft.core.GlobalPos g) {
+        if (worldDir == null) return;
+        BlockPos p = g.pos();
+        Waypoint w = new Waypoint("death", "☠", p.getX(), p.getY(), p.getZ(), g.dimension().location().toString().replace(':', '_'));
+        synchronized (WAYPOINTS) {
+            if (WAYPOINTS.contains(w)) return;
+            WAYPOINTS.removeIf(x -> x.id().equals("death"));
+            WAYPOINTS.add(w);
+            saveWaypoints();
+        }
     }
 
     private static void enqueue(long chunk) {

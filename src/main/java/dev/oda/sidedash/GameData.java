@@ -18,6 +18,9 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -93,17 +96,41 @@ final class GameData {
         o.addProperty("fps", mc.getFps());
         o.addProperty("selected", p.getInventory().selected);
 
-        // 0-8 hotbar, 9-35 main, 36-39 armor (feet..head), 40 offhand
-        JsonArray inv = new JsonArray();
+        // Inventory slots: s = inventory index (0-8 hotbar, 9-35 main, 36-39 armor feet..head, 40 offhand),
+        // m = index of that slot in the currently open menu (what clicks use); a chest etc. goes to "container".
         Inventory pi = p.getInventory();
+        AbstractContainerMenu menu = p.containerMenu;
+        int[] menuIndex = new int[pi.getContainerSize()];
+        java.util.Arrays.fill(menuIndex, -1);
+        JsonArray box = new JsonArray();
+        for (int m = 0; m < menu.slots.size(); m++) {
+            Slot sl = menu.slots.get(m);
+            if (sl.container == pi) { if (sl.getContainerSlot() < menuIndex.length) menuIndex[sl.getContainerSlot()] = m; }
+            else if (menu != p.inventoryMenu) {
+                JsonObject it = sl.getItem().isEmpty() ? new JsonObject() : stackJson(sl.getItem());
+                it.addProperty("m", m);
+                box.add(it);
+            }
+        }
+        JsonArray inv = new JsonArray();
         for (int i = 0; i < pi.getContainerSize(); i++) {
             ItemStack st = pi.getItem(i);
             if (st.isEmpty()) continue;
             JsonObject it = stackJson(st);
             it.addProperty("s", i);
+            it.addProperty("m", menuIndex[i]);
             inv.add(it);
         }
         o.add("inv", inv);
+        JsonArray slotMap = new JsonArray();
+        for (int m : menuIndex) slotMap.add(m);
+        o.add("slotMap", slotMap);
+        if (menu != p.inventoryMenu && mc.screen != null) {
+            JsonObject c = new JsonObject();
+            c.addProperty("title", mc.screen.getTitle().getString());
+            c.add("items", box);
+            o.add("container", c);
+        }
 
         JsonArray fx = new JsonArray();
         for (MobEffectInstance e : p.getActiveEffects()) {
@@ -116,6 +143,17 @@ final class GameData {
             fx.add(j);
         }
         o.add("effects", fx);
+
+        JsonArray players = new JsonArray();  // other players the client can see (multiplayer)
+        for (var other : lv.players()) {
+            if (other == p) continue;
+            JsonObject j = new JsonObject();
+            j.addProperty("name", other.getName().getString());
+            j.addProperty("x", other.getBlockX());
+            j.addProperty("z", other.getBlockZ());
+            players.add(j);
+        }
+        o.add("players", players);
 
         JsonObject target = target(mc, lv, p);
         if (target != null) o.add("target", target);
@@ -199,6 +237,33 @@ final class GameData {
             return a.toString();
         });
         return s == null ? "[]" : s;
+    }
+
+    /** Clicks a slot of the open menu like the mouse would. type: quick (shift-click), throw (drop stack), swap (with slot b).
+     *  Goes through the normal container-click packet, so the server validates it. */
+    static void click(int m, String type, int b) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc == null) return;
+        mc.execute(() -> {
+            var p = mc.player;
+            if (p == null || mc.gameMode == null) return;
+            AbstractContainerMenu menu = p.containerMenu;
+            int n = menu.slots.size();
+            if (m < 0 || m >= n) return;
+            int id = menu.containerId;
+            switch (type) {
+                case "quick" -> mc.gameMode.handleInventoryMouseClick(id, m, 0, ClickType.QUICK_MOVE, p);
+                case "throw" -> mc.gameMode.handleInventoryMouseClick(id, m, 1, ClickType.THROW, p);
+                case "swap" -> {
+                    if (b < 0 || b >= n || b == m || !menu.getCarried().isEmpty()) return;
+                    // pick A, put on B (picks up what was there), put that back on A
+                    mc.gameMode.handleInventoryMouseClick(id, m, 0, ClickType.PICKUP, p);
+                    mc.gameMode.handleInventoryMouseClick(id, b, 0, ClickType.PICKUP, p);
+                    if (!menu.getCarried().isEmpty()) mc.gameMode.handleInventoryMouseClick(id, m, 0, ClickType.PICKUP, p);
+                }
+                default -> { }
+            }
+        });
     }
 
     static void selectSlot(int slot) {
