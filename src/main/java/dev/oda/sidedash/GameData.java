@@ -154,6 +154,8 @@ final class GameData {
             players.add(j);
         }
         o.add("players", players);
+        o.addProperty("chatSeq", Memory.chatSeq());
+        o.add("pins", Memory.pinsJson(mc));
 
         JsonObject target = target(mc, lv, p);
         if (target != null) o.add("target", target);
@@ -203,7 +205,7 @@ final class GameData {
         return t;
     }
 
-    private static JsonArray goggleLines(BlockEntity be, boolean sneaking) {
+    static JsonArray goggleLines(BlockEntity be, boolean sneaking) {
         if (be == null) return null;
         Optional<Method> m = GOGGLES.computeIfAbsent(be.getClass(), c -> {
             try { return Optional.of(c.getMethod("addToGoggleTooltip", List.class, boolean.class)); }

@@ -24,11 +24,15 @@
       o.connect(g); g.connect(audio.destination); o.start(); o.stop(audio.currentTime + 0.18);
     } catch (e) {}
   }
-  // floating button: this game's stream deck (pages live at /<key>/g/<game>/, the deck at /<key>/deck/)
+  // Stream-deck button (pages live at /<key>/g/<game>/, the deck at /<key>/deck/).
+  // A page can reserve a spot with an element marked data-sidedash-deck; otherwise we add a floating button.
   var m = location.pathname.match(/^(\/[^/]+)\/g\/([^/]+)\//);
   if (m) document.addEventListener("DOMContentLoaded", function () {
+    var url = m[1] + "/deck/?game=" + m[2];
+    var slot = document.querySelector("[data-sidedash-deck]");
+    if (slot) { slot.title = "Пульт"; slot.addEventListener("click", function () { location.href = url; }); return; }
     var a = document.createElement("a");
-    a.href = m[1] + "/deck/?game=" + m[2];
+    a.href = url;
     a.textContent = "🎛";
     a.title = "Пульт";
     a.style.cssText = "position:fixed;right:16px;bottom:16px;z-index:9999;width:56px;height:56px;border-radius:50%;display:grid;" +

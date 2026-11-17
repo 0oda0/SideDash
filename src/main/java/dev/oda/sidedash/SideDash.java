@@ -35,6 +35,7 @@ public final class SideDash {
         int port = WebServer.start(token);
         if (port > 0) register(port, token);
         WorldMap.init();
+        Memory.init();
         NeoForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingIn e) ->
                 e.getPlayer().displayClientMessage(urlMessage(), false));
         NeoForge.EVENT_BUS.addListener((RegisterClientCommandsEvent e) ->

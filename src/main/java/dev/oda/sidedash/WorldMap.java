@@ -228,6 +228,8 @@ final class WorldMap {
 
     static String dimKey() { return dimKey; }
 
+    static Path worldDir() { return worldDir; }
+
     /** PNG of one tile of the current world, or null if never explored. */
     static byte[] tilePng(String dim, int tx, int tz) {
         if (worldDir == null) return null;

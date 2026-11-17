@@ -82,6 +82,12 @@ final class WebServer {
                 GameData.click(intParam(query, "m", -1), param(query, "type"), intParam(query, "b", -1));
                 send(out, 204, "text/plain", new byte[0], "");
             }
+            else if (path.equals("/chat")) json(out, Memory.chat(intParam(query, "after", 0)));
+            else if (path.startsWith("/where/")) json(out, Memory.where(path.substring(7).replaceFirst("/", ":")));
+            else if (method.equals("POST") && path.equals("/pin")) {
+                Memory.pin(intParam(query, "x", 0), intParam(query, "y", 0), intParam(query, "z", 0), param(query, "on").equals("1"));
+                send(out, 204, "text/plain", new byte[0], "");
+            }
             else if (path.equals("/deck/actions")) json(out, Deck.actions());
             else if (method.equals("POST") && path.equals("/deck/run")) {
                 Deck.run(java.net.URLDecoder.decode(param(query, "id"), StandardCharsets.UTF_8));

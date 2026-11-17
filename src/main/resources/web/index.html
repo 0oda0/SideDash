@@ -36,6 +36,10 @@ main { flex: 1; min-height: 0; display: grid; gap: 12px;
   grid-template-columns: minmax(240px, 300px) auto minmax(300px, 1fr); }
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; min-height: 0; }
 .col { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+/* map column: cards never get squashed, the column scrolls instead (only this one: scrolling the
+   inventory column would let the grid shrink below its width) */
+#overview > .col:last-child { overflow-y: auto; }
+#overview > .col:last-child > .card { flex-shrink: 0; }
 h2 { margin: 0 0 10px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); font-weight: 600; }
 
 /* vitals */
@@ -102,6 +106,22 @@ h2 { margin: 0 0 10px; font-size: 12px; letter-spacing: .08em; text-transform: u
   background: var(--panel2); border-radius: 10px; padding: 8px 10px; max-height: 260px; overflow: auto; }
 
 .tabs { display: flex; gap: 6px; }
+.row { display: flex; gap: 8px; }
+.row input { flex: 1; min-width: 0; font: inherit; color: var(--text); background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+#chat { flex: 1; min-height: 0; display: flex; }
+#chatLog { flex: 1; overflow: auto; display: flex; flex-direction: column; gap: 4px; padding-bottom: 10px; font-size: 15px; user-select: text; }
+#chatLog .sys { color: var(--dim); }
+.pin { background: var(--panel2); border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; }
+.pin .h { display: flex; gap: 10px; align-items: center; }
+.pin img { width: 28px; height: 28px; image-rendering: pixelated; }
+.pin pre { margin: 6px 0 0; font: 12px/1.4 ui-monospace, Consolas, monospace; white-space: pre-wrap; }
+.where { margin-bottom: 10px; }
+.where:empty { display: none; }
+.where .wt { color: var(--accent); font-size: 13px; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+.wrow { display: flex; gap: 12px; align-items: center; padding: 6px 10px; background: var(--panel2); border-radius: 10px; margin-bottom: 4px; }
+.wrow b { min-width: 40px; }
+.wrow span:nth-of-type(1) { flex: 1; }
+.wrow .mod { color: var(--dim); font-size: 13px; }
 .view[hidden] { display: none !important; }
 .tip .acts { display: flex; gap: 8px; margin-top: 8px; }
 #recipes { flex: 1; min-height: 0; display: grid; gap: 12px; grid-template-columns: minmax(280px, 380px) 1fr; }
@@ -141,7 +161,7 @@ input[type=search]:focus { border-color: var(--accent); }
   <div class="chip"><span data-t="day">Day</span> <b id="day">—</b> <b id="clock">—</b></div>
   <div class="chip"><b id="weather">—</b></div>
   <div class="sp"></div>
-  <div class="tabs"><button class="on" data-view="overview" data-t="overview">Overview</button><button data-view="recipes" data-t="recipes">Recipes</button></div>
+  <div class="tabs"><button class="on" data-view="overview" data-t="overview">Overview</button><button data-view="recipes" data-t="recipes">Recipes</button><button data-view="chat" data-t="chatTab">Chat</button><button data-sidedash-deck>🎛</button></div>
   <div class="chip">FPS <b id="fps">—</b></div>
   <button id="fs" data-t="fullscreen">Fullscreen</button>
 </header>
@@ -194,12 +214,23 @@ input[type=search]:focus { border-color: var(--accent); }
       <div class="mapwrap" id="mapwrap"><div id="map"></div>
         <div class="mapbtns"><button id="mapFollow" class="on">◎</button><button id="mapBig">⛶</button></div></div>
     </div>
-    <div class="card target" style="flex:1">
+    <div class="card target" style="flex-grow:1">
       <h2 data-t="lookingAt">Looking at</h2>
       <div id="target"><span class="empty">—</span></div>
     </div>
+    <div class="card target" id="pinsCard" hidden>
+      <h2 data-t="pinned">Pinned</h2>
+      <div id="pins"></div>
+    </div>
   </section>
 </main>
+
+<section class="view" id="chat" hidden>
+  <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0">
+    <div id="chatLog"></div>
+    <form id="chatForm" class="row"><input id="chatIn" autocomplete="off" data-tp="chatPh" placeholder="Message or /command"><button data-t="send">Send</button></form>
+  </div>
+</section>
 
 <section class="view" id="recipes" hidden>
   <div class="card">
@@ -209,6 +240,7 @@ input[type=search]:focus { border-color: var(--accent); }
   <div class="card">
     <div class="rhead"><img id="rIcon" alt="" hidden><div class="name" id="rName"></div>
       <div class="tabs"><button class="on" data-mode="craft" data-t="howToMake">How to make</button><button data-mode="uses" data-t="usedIn">Used in</button></div></div>
+    <div class="where" id="where"></div>
     <div class="rlist" id="rlist"><span class="empty" data-t="pickItem">Pick an item on the left or tap one in your inventory.</span></div>
   </div>
 </section>
@@ -226,6 +258,8 @@ const I18N = {
     searchPh: "Поиск предмета…", pickItem: "Выбери предмет слева или тапни по нему в инвентаре.", noRecipes: "Рецептов не найдено",
     noJei: "Для рецептов нужен мод JEI", loading: "Загрузка…", addMark: "Метка здесь", markName: "Название метки:",
     died: "Ты погиб — точка смерти на карте", lowHp: "Мало здоровья!", hungry: "Пора поесть", noAir: "Заканчивается воздух!",
+    pin: "Закрепить", pinned: "Закреплено", far: "далеко, не загружено", chatTab: "Чат", send: "Отправить", chatPh: "Сообщение или /команда",
+    whereIs: "Лежит в сундуках", onMap: "На карте",
     quick: "Перекинуть", move: "Переложить", throw: "Выбросить", moveHint: "Тапни слот, куда переложить",
     tpHere: "Телепорт сюда", tp: "Телепорт", del: "Удалить", delQ: "Удалить метку", blocks: "блоков", clear: "Ясно", rain: "Дождь", thunder: "Гроза", nothing: "—" }
 };
@@ -233,6 +267,7 @@ let lang = navigator.language.startsWith("ru") ? "ru" : "en";
 const t = k => (I18N[lang] && I18N[lang][k]) || ({ noRecipes: "No recipes found", noJei: "Recipes need the JEI mod installed", loading: "Loading…",
   howToMake: "How to make", usedIn: "Used in", addMark: "Mark here", markName: "Waypoint name:", tpHere: "Teleport here",
   died: "You died — death point is on the map", lowHp: "Low health!", hungry: "Time to eat", noAir: "Running out of air!",
+  pin: "Pin", far: "far away, not loaded", whereIs: "Stored in", onMap: "On map",
   quick: "Shift-click", move: "Move", throw: "Drop", moveHint: "Tap the slot to move it to",
   tp: "Teleport", del: "Delete", delQ: "Delete waypoint", blocks: "blocks", noEffects: "No effects", clear: "Clear", rain: "Rain", thunder: "Thunder", nothing: "—" })[k] || k;
 function applyLang() {
@@ -374,8 +409,52 @@ function render(s) {
     `<div class="h">${tg.icon ? `<img src="${iconUrl(tg.icon)}" alt="" onerror="this.remove()">` : ""}
       <div><div class="name">${esc(tg.name)}</div><div class="mod">${esc(tg.mod)}${tg.pos ? " · " + tg.pos : ""}</div></div></div>
      ${tg.hp != null ? `<div class="stat" style="margin-top:10px"><div class="bar"><i style="background:var(--hp);width:${pct(tg.hp, tg.maxHp)}"></i></div><div class="top"><span></span><b>${fmt(tg.hp)} / ${fmt(tg.maxHp)}</b></div></div>` : ""}
-     ${tg.lines ? `<pre>${tg.lines.map(esc).join("\n")}</pre>` : ""}`;
+     ${tg.lines ? `<pre>${tg.lines.map(esc).join("\n")}</pre>` : ""}
+     ${tg.kind === "block" ? `<div class="acts" style="margin-top:10px"><button data-pin="${esc(tg.pos)}">📌 ${t("pin")}</button></div>` : ""}`;
+
+  const pinsKey = JSON.stringify(s.pins || []);
+  if (pinsKey !== lastPins) {
+    lastPins = pinsKey;
+    $("pinsCard").hidden = !(s.pins && s.pins.length);
+    $("pins").innerHTML = (s.pins || []).map(p => `<div class="pin">
+      <div class="h">${p.icon ? `<img src="${iconUrl(p.icon)}" alt="" onerror="this.remove()">` : ""}<div style="flex:1"><div class="name">${esc(p.name || "📍")}</div>
+        <div class="mod">${esc(p.pos)}${p.far ? " · " + t("far") : ""}</div></div><button data-unpin="${esc(p.pos)}">✕</button></div>
+      ${p.lines ? `<pre>${p.lines.map(esc).join("\n")}</pre>` : ""}</div>`).join("");
+  }
+  if (s.chatSeq > chatSeq) loadChat();
 }
+let lastPins = "";
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-pin],[data-unpin]"); if (!b) return;
+  const [x, y, z] = (b.dataset.pin || b.dataset.unpin).split(" ");
+  fetch(`pin?x=${x}&y=${y}&z=${z}&on=${b.dataset.pin ? 1 : 0}`, { method: "POST" });
+});
+
+// ---- chat ----
+let chatSeq = 0, chatBusy = false;
+async function loadChat() {
+  if (chatBusy) return;
+  chatBusy = true;
+  try {
+    const lines = await (await fetch("chat?after=" + chatSeq)).json();
+    const box = $("chatLog"), atEnd = box.scrollTop + box.clientHeight >= box.scrollHeight - 30;
+    for (const l of lines) {
+      chatSeq = Math.max(chatSeq, l.seq);
+      const d = document.createElement("div");
+      d.className = l.sys ? "sys" : ""; d.textContent = l.text;
+      box.appendChild(d);
+    }
+    while (box.children.length > 300) box.firstChild.remove();
+    if (atEnd) box.scrollTop = box.scrollHeight;
+  } catch {}
+  chatBusy = false;
+}
+$("chatForm").onsubmit = e => {
+  e.preventDefault();
+  const v = $("chatIn").value.trim(); if (!v) return;
+  fetch("deck/run?id=" + encodeURIComponent("cmd:" + v), { method: "POST" });
+  $("chatIn").value = "";
+};
 
 // live data
 function connect() {
@@ -487,6 +566,7 @@ async function openRecipes(id, name, mode) {
   rItem = { id, name }; rMode = mode || rMode;
   document.querySelectorAll("[data-mode]").forEach(b => b.classList.toggle("on", b.dataset.mode === rMode));
   $("rIcon").src = iconUrl(id); $("rIcon").hidden = false; $("rName").textContent = name;
+  showWhere(id);
   const seq = ++rSeq, path = id.replace(":", "/");
   $("rlist").innerHTML = `<span class="empty">${t("loading")}</span>`;
   let list;
@@ -502,6 +582,28 @@ async function openRecipes(id, name, mode) {
     await new Promise(res => { img.onload = img.onerror = res; img.src = img.dataset.src; });
   }
 }
+// "where is it": containers that held this item when you last opened them
+async function showWhere(id) {
+  $("where").innerHTML = "";
+  let list = [];
+  try { list = await (await fetch("where/" + id.replace(":", "/"))).json(); } catch {}
+  if (!list.length) return;
+  const total = list.reduce((a, b) => a + b.n, 0);
+  $("where").innerHTML = `<div class="wt">${t("whereIs")} · ${total}</div>` + list.map((b, i) =>
+    `<div class="wrow"><b>${b.n}</b><span>${esc(b.title || "?")}</span><span class="mod">${b.x} ${b.y} ${b.z}</span>
+      <button data-onmap="${i}">${t("onMap")}</button></div>`).join("");
+  $("where").onclick = e => {
+    const btn = e.target.closest("[data-onmap]"); if (!btn) return;
+    const b = list[+btn.dataset.onmap];
+    showView("overview"); setFollow(false);
+    setTimeout(() => {
+      lmap.invalidateSize(); lmap.setView(ll(b.x + .5, b.z + .5), 2);
+      const ring = L.circleMarker(ll(b.x + .5, b.z + .5), { radius: 14, color: "#5fd3a8", weight: 3 }).addTo(lmap);
+      setTimeout(() => ring.remove(), 15000);
+    }, 50);
+  };
+}
+
 document.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => rItem && openRecipes(rItem.id, rItem.name, b.dataset.mode));
 
 let qTimer;
