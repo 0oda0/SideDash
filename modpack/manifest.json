@@ -1,0 +1,179 @@
+{
+  "minecraft": {
+    "version": "1.21.1",
+    "modLoaders": [
+      {
+        "id": "neoforge-21.1.267",
+        "primary": true
+      }
+    ]
+  },
+  "manifestType": "minecraftModpack",
+  "manifestVersion": 1,
+  "name": "SideDash Create Pack",
+  "version": "1.0.0",
+  "author": "0oda0",
+  "files": [
+    {
+      "projectID": 328085,
+      "fileID": 7963363,
+      "required": true
+    },
+    {
+      "projectID": 238222,
+      "fileID": 9393327,
+      "required": true
+    },
+    {
+      "projectID": 324717,
+      "fileID": 8591319,
+      "required": true
+    },
+    {
+      "projectID": 263420,
+      "fileID": 9067173,
+      "required": true
+    },
+    {
+      "projectID": 317780,
+      "fileID": 9067277,
+      "required": true
+    },
+    {
+      "projectID": 394468,
+      "fileID": 8756580,
+      "required": true
+    },
+    {
+      "projectID": 790626,
+      "fileID": 9309399,
+      "required": true
+    },
+    {
+      "projectID": 429235,
+      "fileID": 7524151,
+      "required": true
+    },
+    {
+      "projectID": 439890,
+      "fileID": 9029800,
+      "required": true
+    },
+    {
+      "projectID": 968398,
+      "fileID": 9504789,
+      "required": true
+    },
+    {
+      "projectID": 509285,
+      "fileID": 7943181,
+      "required": true
+    },
+    {
+      "projectID": 659674,
+      "fileID": 8929365,
+      "required": true
+    },
+    {
+      "projectID": 947914,
+      "fileID": 8777573,
+      "required": true
+    },
+    {
+      "projectID": 869316,
+      "fileID": 8542167,
+      "required": true
+    },
+    {
+      "projectID": 688768,
+      "fileID": 9104689,
+      "required": true
+    },
+    {
+      "projectID": 905861,
+      "fileID": 8215216,
+      "required": true
+    },
+    {
+      "projectID": 820977,
+      "fileID": 9104646,
+      "required": true
+    },
+    {
+      "projectID": 398521,
+      "fileID": 8765184,
+      "required": true
+    },
+    {
+      "projectID": 905040,
+      "fileID": 6299879,
+      "required": true
+    },
+    {
+      "projectID": 923238,
+      "fileID": 8156977,
+      "required": true
+    },
+    {
+      "projectID": 906239,
+      "fileID": 7544005,
+      "required": true
+    },
+    {
+      "projectID": 655608,
+      "fileID": 8545274,
+      "required": true
+    },
+    {
+      "projectID": 646668,
+      "fileID": 8303106,
+      "required": true
+    },
+    {
+      "projectID": 377835,
+      "fileID": 6776826,
+      "required": true
+    },
+    {
+      "projectID": 693815,
+      "fileID": 7430073,
+      "required": true
+    },
+    {
+      "projectID": 889722,
+      "fileID": 8745418,
+      "required": true
+    },
+    {
+      "projectID": 936020,
+      "fileID": 8126570,
+      "required": true
+    },
+    {
+      "projectID": 1689768,
+      "fileID": 9527937,
+      "required": true
+    },
+    {
+      "projectID": 351264,
+      "fileID": 9641139,
+      "required": true
+    },
+    {
+      "projectID": 1216624,
+      "fileID": 8937074,
+      "required": true
+    },
+    {
+      "projectID": 1279407,
+      "fileID": 7587771,
+      "required": true
+    },
+    {
+      "projectID": 419699,
+      "fileID": 9608861,
+      "required": true
+    }
+  ],
+  "overrides": "overrides"
+}

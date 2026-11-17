@@ -1,0 +1,258 @@
+{
+  "create": {
+    "title": "Create",
+    "version": "6.0.10+mc1.21.1",
+    "file": "create-1.21.1-6.0.10.jar",
+    "url": "https://cdn.modrinth.com/data/LNytGWDc/versions/UjX6dr61/create-1.21.1-6.0.10.jar",
+    "side": "optional/required",
+    "cf_file": "create-1.21.1-6.0.10.jar"
+  },
+  "jei": {
+    "title": "Just Enough Items (JEI)",
+    "version": "19.70.0.469",
+    "file": "jei-1.21.1-neoforge-19.70.0.469.jar",
+    "url": "https://cdn.modrinth.com/data/u6dRKJwZ/versions/1vC6z8wV/jei-1.21.1-neoforge-19.70.0.469.jar",
+    "side": "optional/optional",
+    "cf_file": "jei-1.21.1-neoforge-19.70.0.469.jar"
+  },
+  "jade": {
+    "title": "Jade \ud83d\udd0d",
+    "version": "15.10.6+neoforge",
+    "file": "Jade-1.21.1-NeoForge-15.10.6.jar",
+    "url": "https://cdn.modrinth.com/data/nvQzSEkH/versions/eYz2YBGT/Jade-1.21.1-NeoForge-15.10.6.jar",
+    "side": "optional/optional",
+    "cf_file": "Jade-1.21.1-NeoForge-15.10.6.jar"
+  },
+  "xaeros-minimap": {
+    "title": "Xaero's Minimap",
+    "version": "neoforge-1.21.1-26.6.0",
+    "file": "xaerominimap-neoforge-1.21.1-26.6.0.jar",
+    "url": "https://cdn.modrinth.com/data/1bokaNcj/versions/irjR7dHk/xaerominimap-neoforge-1.21.1-26.6.0.jar",
+    "side": "required/optional",
+    "cf_file": "xaerominimap-neoforge-1.21.1-26.6.0.jar"
+  },
+  "xaeros-world-map": {
+    "title": "Xaero's World Map",
+    "version": "neoforge-1.21.1-1.47.0",
+    "file": "xaeroworldmap-neoforge-1.21.1-1.47.0.jar",
+    "url": "https://cdn.modrinth.com/data/NcUtCpym/versions/SnQ4SoDe/xaeroworldmap-neoforge-1.21.1-1.47.0.jar",
+    "side": "required/optional",
+    "cf_file": "xaeroworldmap-neoforge-1.21.1-1.47.0.jar"
+  },
+  "sodium": {
+    "title": "Sodium",
+    "version": "mc1.21.1-0.8.13-neoforge",
+    "file": "sodium-neoforge-0.8.13+mc1.21.1.jar",
+    "url": "https://cdn.modrinth.com/data/AANobbMI/versions/uMOpc5uV/sodium-neoforge-0.8.13%2Bmc1.21.1.jar",
+    "side": "required/unsupported",
+    "cf_file": "sodium-neoforge-0.8.13+mc1.21.1.jar"
+  },
+  "modernfix": {
+    "title": "ModernFix",
+    "version": "5.27.27+mc1.21.1",
+    "file": "modernfix-neoforge-5.27.27+mc1.21.1.jar",
+    "url": "https://cdn.modrinth.com/data/nmDcB62a/versions/ZDZENbHH/modernfix-neoforge-5.27.27%2Bmc1.21.1.jar",
+    "side": "optional/optional",
+    "cf_file": "modernfix-neoforge-5.27.27+mc1.21.1.jar"
+  },
+  "ferrite-core": {
+    "title": "FerriteCore",
+    "version": "7.0.3-neoforge",
+    "file": "ferritecore-7.0.3-neoforge.jar",
+    "url": "https://cdn.modrinth.com/data/uXXizFIs/versions/x7kQWVju/ferritecore-7.0.3-neoforge.jar",
+    "side": "optional/optional",
+    "cf_file": "ferritecore-7.0.3-neoforge.jar"
+  },
+  "createaddition": {
+    "title": "Create Crafts & Additions",
+    "version": "neoforge-1.21.1-1.7.2",
+    "file": "createaddition-1.7.2.jar",
+    "url": "https://cdn.modrinth.com/data/kU1G12Nn/versions/hsjVajlP/createaddition-1.7.2.jar",
+    "side": "required/required",
+    "cf_file": "createaddition-1.7.2.jar"
+  },
+  "copycats": {
+    "title": "Create: Copycats+",
+    "version": "3.0.11+mc.1.21.1-neoforge",
+    "file": "copycats-3.0.11+mc.1.21.1-neoforge.jar",
+    "url": "https://cdn.modrinth.com/data/UT2M39wf/versions/zLlVJXf0/copycats-3.0.11%2Bmc.1.21.1-neoforge.jar",
+    "side": "required/required",
+    "cf_file": "copycats-3.0.11-mc.1.21.1-neoforge.jar"
+  },
+  "create-deco": {
+    "title": "Create Deco",
+    "version": "2.1.3",
+    "file": "createdeco-2.1.3.jar",
+    "url": "https://cdn.modrinth.com/data/sMvUb4Rb/versions/qrcMVoBD/createdeco-2.1.3.jar",
+    "side": "required/required",
+    "cf_file": "createdeco-2.1.3.jar"
+  },
+  "slice-and-dice": {
+    "title": "Create Slice & Dice",
+    "version": "4.3.4",
+    "file": "sliceanddice-4.3.4-neoforge.jar",
+    "url": "https://cdn.modrinth.com/data/GmjmRQ0A/versions/D6mQaFRW/sliceanddice-4.3.4-neoforge.jar",
+    "side": "required/required",
+    "cf_file": "sliceanddice-4.3.4-neoforge.jar"
+  },
+  "create-connected": {
+    "title": "Create: Connected",
+    "version": "1.3.3-mc1.21.1",
+    "file": "create_connected-1.3.3-mc1.21.1.jar",
+    "url": "https://cdn.modrinth.com/data/Vg5TIO6d/versions/Xe7EqzfQ/create_connected-1.3.3-mc1.21.1.jar",
+    "side": "required/required",
+    "cf_file": "create_connected-1.3.3-mc1.21.1.jar"
+  },
+  "create-diesel-generators": {
+    "title": "Create: Diesel Generators",
+    "version": "1.21.1-1.3.15",
+    "file": "createdieselgenerators-1.21.1-1.3.15.jar",
+    "url": "https://cdn.modrinth.com/data/ZM3tt6p1/versions/UoPH8lO1/createdieselgenerators-1.21.1-1.3.15.jar",
+    "side": "required/required",
+    "cf_file": "createdieselgenerators-1.21.1-1.3.15.jar"
+  },
+  "create-enchantment-industry": {
+    "title": "Create: Enchantment Industry",
+    "version": "2.5.4b",
+    "file": "create-enchantment-industry-2.5.4b.jar",
+    "url": "https://cdn.modrinth.com/data/JWGBpFUP/versions/L6VSDdC4/create-enchantment-industry-2.5.4b.jar",
+    "side": "required/required",
+    "cf_file": "create-enchantment-industry-2.5.4b.jar"
+  },
+  "create-new-age": {
+    "title": "Create: New Age",
+    "version": "1.2.0+mc1.21.1",
+    "file": "create-new-age-1.2.0+neoforge-mc1.21.1.jar",
+    "url": "https://cdn.modrinth.com/data/FTeXqI9v/versions/IwtuwMZy/create-new-age-1.2.0%2Bneoforge-mc1.21.1.jar",
+    "side": "required/required",
+    "cf_file": "create-new-age-1.2.0+neoforge-mc1.21.1.jar"
+  },
+  "create-central-kitchen": {
+    "title": "Create: Central Kitchen",
+    "version": "2.6.2b",
+    "file": "create-central-kitchen-2.6.2b.jar",
+    "url": "https://cdn.modrinth.com/data/btq68HMO/versions/qZxkZR8W/create-central-kitchen-2.6.2b.jar",
+    "side": "required/required",
+    "cf_file": "create-central-kitchen-2.6.2b.jar"
+  },
+  "farmers-delight": {
+    "title": "Farmer's Delight",
+    "version": "1.21.1-1.3.4",
+    "file": "FarmersDelight-1.21.1-1.3.4.jar",
+    "url": "https://cdn.modrinth.com/data/R2OftAxM/versions/XTVZDOol/FarmersDelight-1.21.1-1.3.4.jar",
+    "side": "required/required",
+    "cf_file": "FarmersDelight-1.21.1-1.3.4.jar"
+  },
+  "bellsandwhistles": {
+    "title": "Create: Bells & Whistles",
+    "version": "v0.4.7-1.21.1",
+    "file": "bellsandwhistles-0.4.7-1.21.1.jar",
+    "url": "https://cdn.modrinth.com/data/gJ5afkVv/versions/w0mifib8/bellsandwhistles-0.4.7-1.21.1.jar",
+    "side": "required/required",
+    "cf_file": "bellsandwhistles-0.4.7-1.21.1.jar"
+  },
+  "create-design-n-decor": {
+    "title": "Create: Design n' Decor",
+    "version": "2.2b",
+    "file": "Design-n-Decor-1.21.1-2.2b.jar",
+    "url": "https://cdn.modrinth.com/data/x49wilh8/versions/uQsIRky8/Design-n-Decor-1.21.1-2.2b.jar",
+    "side": "required/required",
+    "cf_file": "Design-n-Decor-1.21.1-2.2b.jar"
+  },
+  "interiors": {
+    "title": "Create: Interiors",
+    "version": "0.6.1",
+    "file": "interiors-1.21.1-neoforge-0.6.1.jar",
+    "url": "https://cdn.modrinth.com/data/r4Knci2k/versions/gBrfZy6S/interiors-1.21.1-neoforge-0.6.1.jar",
+    "side": "required/required",
+    "cf_file": "interiors-1.21.1-neoforge-0.6.1.jar"
+  },
+  "create-jetpack": {
+    "title": "Create Jetpack",
+    "version": "5.2.1",
+    "file": "create_jetpack-forge-5.2.1.jar",
+    "url": "https://cdn.modrinth.com/data/UbFnAd4l/versions/sCwiqLqq/create_jetpack-forge-5.2.1.jar",
+    "side": "required/required",
+    "cf_file": "create_jetpack-forge-5.2.1.jar"
+  },
+  "create-big-cannons": {
+    "title": "Create Big Cannons",
+    "version": "5.11.7",
+    "file": "createbigcannons-5.11.7+mc.1.21.1.jar",
+    "url": "https://cdn.modrinth.com/data/GWp4jCJj/versions/bOiDu0LS/createbigcannons-5.11.7%2Bmc.1.21.1.jar",
+    "side": "required/required",
+    "cf_file": "createbigcannons-5.11.7+mc.1.21.1.jar"
+  },
+  "create-goggles": {
+    "title": "Create Goggles",
+    "version": "6.1.1",
+    "file": "creategoggles-1.21.1-6.1.1-[NEOFORGE].jar",
+    "url": "https://cdn.modrinth.com/data/L1RT5SJc/versions/Co24W2FL/creategoggles-1.21.1-6.1.1-%5BNEOFORGE%5D.jar",
+    "side": "required/required",
+    "cf_file": "creategoggles-1.21.1-6.1.1-[NEOFORGE].jar"
+  },
+  "create-tfmg": {
+    "title": "Create: The Factory Must Grow",
+    "version": "1.2.0",
+    "file": "tfmg-1.2.0.jar",
+    "url": "https://cdn.modrinth.com/data/USgVjXsk/versions/uDi14nbt/tfmg-1.2.0.jar",
+    "side": "required/required",
+    "cf_file": "tfmg-1.2.0.jar"
+  },
+  "numismatics": {
+    "title": "Create: Numismatics",
+    "version": "1.1.0+neoforge-mc1.21.1",
+    "file": "CreateNumismatics-1.1.0+neoforge-mc1.21.1.jar",
+    "url": "https://cdn.modrinth.com/data/Jdbbtt0i/versions/kVi3TESX/CreateNumismatics-1.1.0%2Bneoforge-mc1.21.1.jar",
+    "side": "required/required",
+    "cf_file": "CreateNumismatics-1.1.0+neoforge-mc1.21.1.jar"
+  },
+  "create-power-loader": {
+    "title": "Create: Power Loader",
+    "version": "2.0.5-mc1.21.1",
+    "file": "create_power_loader-2.0.5-mc1.21.1.jar",
+    "url": "https://cdn.modrinth.com/data/wPQ6GgFE/versions/3Y4r0ItR/create_power_loader-2.0.5-mc1.21.1.jar",
+    "side": "required/required",
+    "cf_file": "create_power_loader-2.0.5-mc1.21.1.jar"
+  },
+  "mezzconfig": {
+    "title": "MezzConfig",
+    "version": "0.7.1",
+    "file": "mezz_config-1.21.1-neoforge-0.7.1-standalone.jar",
+    "url": "https://cdn.modrinth.com/data/7tEfOcA7/versions/V6oWFnxW/mezz_config-1.21.1-neoforge-0.7.1-standalone.jar",
+    "side": "optional/optional",
+    "cf_file": "mezz_config-1.21.1-neoforge-0.7.1-standalone.jar"
+  },
+  "kotlin-for-forge": {
+    "title": "Kotlin for Forge",
+    "version": "5.13.0",
+    "file": "kotlinforforge-5.13.0-all.jar",
+    "url": "https://cdn.modrinth.com/data/ordsPcFz/versions/9ZlVvei8/kotlinforforge-5.13.0-all.jar",
+    "side": "optional/optional",
+    "cf_file": "kotlinforforge-5.13.0-all.jar"
+  },
+  "create-dragons-plus": {
+    "title": "Create: Dragons Plus",
+    "version": "1.11.9",
+    "file": "CreateDragonsPlus-1.11.9.jar",
+    "url": "https://cdn.modrinth.com/data/dzb1a5WV/versions/b0u9vk8C/CreateDragonsPlus-1.11.9.jar",
+    "side": "required/required",
+    "cf_file": "CreateDragonsPlus-1.11.9.jar"
+  },
+  "rpl": {
+    "title": "Ritchie's Projectile Library",
+    "version": "2.1.2",
+    "file": "ritchiesprojectilelib-2.1.2+mc.1.21.1-neoforge.jar",
+    "url": "https://cdn.modrinth.com/data/B3pb093D/versions/hZ6B2Z0x/ritchiesprojectilelib-2.1.2%2Bmc.1.21.1-neoforge.jar",
+    "side": "required/required",
+    "cf_file": "ritchiesprojectilelib-2.1.2-mc.1.21.1-neoforge.jar"
+  },
+  "architectury-api": {
+    "title": "Architectury API",
+    "version": "13.0.12+neoforge",
+    "file": "architectury-13.0.12-neoforge.jar",
+    "url": "https://cdn.modrinth.com/data/lhGA9TYQ/versions/xGfBrBzj/architectury-13.0.12-neoforge.jar",
+    "side": "required/required",
+    "cf_file": "architectury-13.0.12-neoforge.jar"
+  }
+}

@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#101418">
+<title>SideDash</title>
+<style>
+:root {
+  --bg: #0e1215; --panel: #161c21; --panel2: #1d252c; --line: #2a343d;
+  --text: #e7edf2; --dim: #8796a3; --accent: #5fd3a8;
+  --hp: #e5484d; --absorb: #f5c542; --food: #c98b4a; --armor: #9fb3c8; --air: #58a6ff; --xp: #7ee05a;
+  --slot: #232c34; --slot-hi: #f5d76e; --good: #5fd3a8; --bad: #f07178;
+  --r: 14px;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+  font: 15px/1.35 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; user-select: none; }
+body { padding: max(12px, env(safe-area-inset-top)) 12px 12px; display: flex; flex-direction: column; gap: 12px; }
+header { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; padding: 4px 6px; }
+header .name { font-weight: 700; font-size: 18px; }
+header .chip { color: var(--dim); display: flex; gap: 6px; align-items: baseline; }
+header .chip b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+header .sp { flex: 1; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--bad); }
+.dot.on { background: var(--good); }
+button { font: inherit; color: var(--text); background: var(--panel2); border: 1px solid var(--line);
+  border-radius: 10px; padding: 6px 12px; cursor: pointer; }
+button.on { border-color: var(--accent); color: var(--accent); }
+
+main { flex: 1; min-height: 0; display: grid; gap: 12px;
+  grid-template-columns: minmax(240px, 300px) auto minmax(300px, 1fr); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; min-height: 0; }
+.col { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+h2 { margin: 0 0 10px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); font-weight: 600; }
+
+/* vitals */
+.stat { margin-bottom: 12px; }
+.stat .top { display: flex; justify-content: space-between; font-size: 13px; color: var(--dim); margin-bottom: 4px; }
+.stat .top b { color: var(--text); font-variant-numeric: tabular-nums; }
+.bar { height: 12px; background: var(--panel2); border-radius: 6px; overflow: hidden; display: flex; }
+.bar i { display: block; height: 100%; transition: width .25s; }
+.lvl { font-size: 30px; font-weight: 800; color: var(--xp); line-height: 1; }
+.effects { display: flex; flex-direction: column; gap: 8px; overflow: auto; }
+.fx { display: flex; align-items: center; gap: 10px; padding: 6px 8px; background: var(--panel2); border-radius: 10px; border-left: 3px solid var(--good); }
+.fx.bad { border-left-color: var(--bad); }
+.fx img { width: 28px; height: 28px; image-rendering: pixelated; }
+.fx .t { margin-left: auto; color: var(--dim); font-variant-numeric: tabular-nums; }
+.empty { color: var(--dim); font-size: 13px; }
+
+/* inventory */
+.inv { display: grid; grid-template-columns: auto 1fr; gap: 10px 14px; align-items: start; }
+.grid { display: grid; grid-template-columns: repeat(9, var(--s)); gap: 4px; --s: clamp(40px, 5.2vw, 60px); }
+.armor { display: grid; grid-template-rows: repeat(5, var(--s)); gap: 4px; --s: clamp(40px, 5.2vw, 60px); }
+.armor .slot:last-child { margin-top: 8px; }
+.slot { width: var(--s); height: var(--s); background: var(--slot); border: 2px solid transparent; border-radius: 8px;
+  position: relative; display: grid; place-items: center; cursor: pointer; }
+.slot img { width: 72%; height: 72%; object-fit: cover; object-position: top; image-rendering: pixelated; }
+.slot .ab { font-size: 11px; color: var(--dim); text-align: center; overflow: hidden; padding: 2px; }
+.slot .n { position: absolute; right: 4px; bottom: 1px; font-weight: 700; font-size: 13px; text-shadow: 0 1px 2px #000, 0 0 2px #000; }
+.slot .d { position: absolute; left: 6px; right: 6px; bottom: 4px; height: 3px; border-radius: 2px; background: #000a; }
+.slot .d i { display: block; height: 100%; border-radius: 2px; }
+.slot.ench { box-shadow: inset 0 0 12px #b47cff66; }
+.slot.sel { border-color: var(--slot-hi); }
+.slot.pick { outline: 2px solid var(--accent); outline-offset: 1px; }
+.hotbar { margin-top: 10px; }
+.hotbar .slot { background: var(--panel2); }
+.tip { margin-top: 12px; min-height: 64px; background: var(--panel2); border-radius: 10px; padding: 10px 12px; font-size: 14px; white-space: pre-wrap; }
+.tip .h { font-weight: 700; margin-bottom: 4px; }
+.tip .l { color: var(--dim); }
+
+/* map + target */
+.mapwrap { position: relative; aspect-ratio: 1; width: 100%; background: #0a0d10; border-radius: 10px; overflow: hidden; }
+canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+.mapbtns { position: absolute; top: 8px; right: 8px; display: flex; gap: 6px; }
+.mapbtns button { background: #000a; backdrop-filter: blur(4px); min-width: 40px; }
+.mapwrap.big { position: fixed; inset: 0; z-index: 4; aspect-ratio: auto; border-radius: 0; display: grid; place-items: center; }
+.mapwrap.big canvas { width: min(100vw, 100vh); height: min(100vw, 100vh); }
+.mapwrap.big .mapbtns { top: 16px; right: 16px; }
+.mapwrap.big .mapbtns button { font-size: 20px; padding: 10px 16px; }
+.target .h { display: flex; gap: 10px; align-items: center; }
+.target img { width: 36px; height: 36px; image-rendering: pixelated; object-fit: cover; object-position: top; }
+.target .name { font-weight: 700; font-size: 16px; }
+.target .mod { color: var(--accent); font-size: 12px; }
+.target pre { margin: 10px 0 0; font: 13px/1.45 ui-monospace, Consolas, monospace; white-space: pre-wrap; color: var(--text);
+  background: var(--panel2); border-radius: 10px; padding: 8px 10px; max-height: 260px; overflow: auto; }
+
+.tabs { display: flex; gap: 6px; }
+.view[hidden] { display: none !important; }
+.tip .acts { display: flex; gap: 8px; margin-top: 8px; }
+#recipes { flex: 1; min-height: 0; display: grid; gap: 12px; grid-template-columns: minmax(280px, 380px) 1fr; }
+#recipes .card { display: flex; flex-direction: column; min-height: 0; }
+input[type=search] { font: inherit; color: var(--text); background: var(--panel2); border: 1px solid var(--line);
+  border-radius: 10px; padding: 10px 12px; width: 100%; outline: none; }
+input[type=search]:focus { border-color: var(--accent); }
+.results { margin-top: 10px; overflow: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 6px; align-content: start; }
+.results .slot { width: auto; height: auto; aspect-ratio: 1; }
+.rhead { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+.rhead img { width: 40px; height: 40px; image-rendering: pixelated; }
+.rhead .name { font-weight: 700; font-size: 18px; flex: 1; }
+.rlist { overflow: auto; display: flex; flex-wrap: wrap; gap: 14px; align-content: start; }
+.rec { background: var(--panel2); border-radius: 10px; padding: 8px; max-width: 100%; }
+.rec .t { font-size: 12px; color: var(--dim); margin-bottom: 6px; }
+.rec img { display: block; image-rendering: pixelated; max-width: 100%; height: auto; border-radius: 4px; }
+.offline { position: fixed; inset: 0; display: none; place-items: center; background: #0e1215ee; z-index: 5; text-align: center; padding: 24px; }
+.offline.show { display: grid; }
+.offline div { max-width: 420px; color: var(--dim); }
+.offline b { display: block; color: var(--text); font-size: 20px; margin-bottom: 8px; }
+
+@media (max-width: 1100px) {
+  main { grid-template-columns: 1fr 1fr; }
+  #inventoryCol { grid-column: 1 / -1; order: -1; }
+}
+@media (max-width: 700px) {
+  main, #recipes { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="dot" id="dot"></div>
+  <div class="name" id="pname">—</div>
+  <div class="chip">XYZ <b id="xyz">—</b></div>
+  <div class="chip" id="biomeChip"><b id="biome">—</b></div>
+  <div class="chip"><span data-t="day">Day</span> <b id="day">—</b> <b id="clock">—</b></div>
+  <div class="chip"><b id="weather">—</b></div>
+  <div class="sp"></div>
+  <div class="tabs"><button class="on" data-view="overview" data-t="overview">Overview</button><button data-view="recipes" data-t="recipes">Recipes</button></div>
+  <div class="chip">FPS <b id="fps">—</b></div>
+  <button id="fs" data-t="fullscreen">Fullscreen</button>
+</header>
+
+<main class="view" id="overview">
+  <section class="col">
+    <div class="card">
+      <h2 data-t="vitals">Vitals</h2>
+      <div class="stat"><div class="top"><span data-t="health">Health</span><b id="hpT">—</b></div>
+        <div class="bar"><i id="hpB" style="background:var(--hp)"></i><i id="abB" style="background:var(--absorb)"></i></div></div>
+      <div class="stat"><div class="top"><span data-t="food">Food</span><b id="foodT">—</b></div>
+        <div class="bar"><i id="foodB" style="background:var(--food)"></i></div></div>
+      <div class="stat"><div class="top"><span data-t="saturation">Saturation</span><b id="satT">—</b></div>
+        <div class="bar"><i id="satB" style="background:#e9b872"></i></div></div>
+      <div class="stat"><div class="top"><span data-t="armor">Armor</span><b id="armorT">—</b></div>
+        <div class="bar"><i id="armorB" style="background:var(--armor)"></i></div></div>
+      <div class="stat" id="airRow" hidden><div class="top"><span data-t="air">Air</span><b id="airT">—</b></div>
+        <div class="bar"><i id="airB" style="background:var(--air)"></i></div></div>
+      <div class="stat" style="margin:0"><div class="top"><span data-t="level">Level</span><b id="xpT">—</b></div>
+        <div style="display:flex;gap:12px;align-items:center"><div class="lvl" id="lvl">0</div>
+          <div class="bar" style="flex:1"><i id="xpB" style="background:var(--xp)"></i></div></div></div>
+    </div>
+    <div class="card" style="flex:1;display:flex;flex-direction:column">
+      <h2 data-t="effects">Effects</h2>
+      <div class="effects" id="effects"></div>
+    </div>
+  </section>
+
+  <section class="col" id="inventoryCol">
+    <div class="card">
+      <h2 data-t="inventory">Inventory</h2>
+      <div class="inv">
+        <div class="armor" id="armor"></div>
+        <div>
+          <div class="grid" id="main"></div>
+          <div class="grid hotbar" id="hotbar"></div>
+        </div>
+      </div>
+      <div class="tip" id="tip"><span class="l" data-t="tapHint">Tap an item to see its tooltip. Tap a hotbar slot twice to select it in game.</span></div>
+    </div>
+  </section>
+
+  <section class="col">
+    <div class="card">
+      <h2 data-t="map">Map</h2>
+      <div class="mapwrap" id="mapwrap"><canvas id="map" width="1024" height="1024"></canvas>
+        <div class="mapbtns"><button data-r="48">+</button><button data-r="96" class="on">◎</button><button data-r="192">−</button><button data-r="256">−−</button>
+          <button id="mapBig">⛶</button></div></div>
+    </div>
+    <div class="card target" style="flex:1">
+      <h2 data-t="lookingAt">Looking at</h2>
+      <div id="target"><span class="empty">—</span></div>
+    </div>
+  </section>
+</main>
+
+<section class="view" id="recipes" hidden>
+  <div class="card">
+    <input type="search" id="q" data-tp="searchPh" placeholder="Search item…" autocomplete="off">
+    <div class="results" id="results"></div>
+  </div>
+  <div class="card">
+    <div class="rhead"><img id="rIcon" alt="" hidden><div class="name" id="rName"></div>
+      <div class="tabs"><button class="on" data-mode="craft" data-t="howToMake">How to make</button><button data-mode="uses" data-t="usedIn">Used in</button></div></div>
+    <div class="rlist" id="rlist"><span class="empty" data-t="pickItem">Pick an item on the left or tap one in your inventory.</span></div>
+  </div>
+</section>
+
+<div class="offline show" id="offline"><div><b data-t="waiting">Waiting for the game…</b><span data-t="waitingHint">Load a world in Minecraft. This page reconnects by itself.</span></div></div>
+
+<script>
+const L = {
+  en: {},
+  ru: { day: "День", fullscreen: "Полный экран", vitals: "Состояние", health: "Здоровье", food: "Голод", saturation: "Насыщение",
+    armor: "Броня", air: "Воздух", level: "Уровень", effects: "Эффекты", inventory: "Инвентарь", map: "Карта",
+    lookingAt: "Смотришь на", waiting: "Жду игру…", waitingHint: "Зайди в мир в Minecraft. Страница подключится сама.",
+    tapHint: "Тапни по предмету, чтобы увидеть описание. Двойной тап по хотбару выбирает слот в игре.",
+    noEffects: "Нет эффектов", overview: "Обзор", recipes: "Рецепты", howToMake: "Как сделать", usedIn: "Где используется",
+    searchPh: "Поиск предмета…", pickItem: "Выбери предмет слева или тапни по нему в инвентаре.", noRecipes: "Рецептов не найдено",
+    noJei: "Для рецептов нужен мод JEI", loading: "Загрузка…", clear: "Ясно", rain: "Дождь", thunder: "Гроза", nothing: "—" }
+};
+let lang = navigator.language.startsWith("ru") ? "ru" : "en";
+const t = k => (L[lang] && L[lang][k]) || ({ noRecipes: "No recipes found", noJei: "Recipes need the JEI mod installed", loading: "Loading…",
+  howToMake: "How to make", usedIn: "Used in", noEffects: "No effects", clear: "Clear", rain: "Rain", thunder: "Thunder", nothing: "—" })[k] || k;
+function applyLang() {
+  document.querySelectorAll("[data-t]").forEach(e => { const v = L[lang][e.dataset.t]; if (v) e.textContent = v; });
+  document.querySelectorAll("[data-tp]").forEach(e => { const v = L[lang][e.dataset.tp]; if (v) e.placeholder = v; });
+}
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const iconUrl = id => "icon/" + id.replace(":", "/") + "?v=3d";  // bump v when icon rendering changes (browser caches icons for a day)
+const ab = id => id.split(":")[1].split("_").map(w => w[0]).join("").slice(0, 3).toUpperCase();
+
+// build slots once: armor 39..36 (head first) + offhand 40, main 9..35, hotbar 0..8
+const slots = {};
+function mk(parent, i) { const d = document.createElement("div"); d.className = "slot"; d.dataset.s = i; parent.appendChild(d); slots[i] = d; }
+[39, 38, 37, 36, 40].forEach(i => mk($("armor"), i));
+for (let i = 9; i < 36; i++) mk($("main"), i);
+for (let i = 0; i < 9; i++) mk($("hotbar"), i);
+
+let state = null, picked = -1;
+function renderSlot(i, it) {
+  const d = slots[i], key = it ? it.id + "|" + it.n + "|" + (it.dmg ?? "") + "|" + (it.ench ? 1 : 0) : "";
+  if (d.dataset.k === key) return;
+  d.dataset.k = key;
+  d.classList.toggle("ench", !!(it && it.ench));
+  if (!it) { d.innerHTML = ""; return; }
+  let h = `<img src="${iconUrl(it.id)}" alt="" onerror="this.outerHTML='<span class=ab>${ab(it.id)}</span>'">`;
+  if (it.n > 1) h += `<span class="n">${it.n}</span>`;
+  if (it.max && it.dmg > 0) { const f = 1 - it.dmg / it.max; h += `<span class="d"><i style="width:${f * 100}%;background:hsl(${f * 120},80%,50%)"></i></span>`; }
+  d.innerHTML = h;
+  d.title = it.name;
+}
+
+document.querySelector("main").addEventListener("click", async e => {
+  const ob = e.target.closest("[data-open]");
+  if (ob) { const it = state && state.inv.find(x => x.s === picked); if (it) { showView("recipes"); openRecipes(it.id, it.name, ob.dataset.open); } return; }
+  const d = e.target.closest(".slot"); if (!d) return;
+  const i = +d.dataset.s;
+  if (i < 9 && picked === i) fetch("slot/" + i, { method: "POST" });  // second tap on a hotbar slot selects it
+  if (picked >= 0 && slots[picked]) slots[picked].classList.remove("pick");
+  picked = i; d.classList.add("pick");
+  const it = state && state.inv.find(x => x.s === i);
+  if (!it) { $("tip").innerHTML = `<span class="l">${t("nothing")}</span>`; return; }
+  $("tip").innerHTML = `<div class="h">${esc(it.name)}</div>`;
+  try {
+    const lines = await (await fetch("tooltip/" + i)).json();
+    if (picked === i) $("tip").innerHTML = `<div class="h">${esc(lines[0] || it.name)}</div>` + lines.slice(1).map(l => `<div class="l">${esc(l)}</div>`).join("")
+      + `<div class="acts"><button data-open="craft">${t("howToMake")}</button><button data-open="uses">${t("usedIn")}</button></div>`;
+  } catch {}
+});
+
+const pct = (v, m) => Math.max(0, Math.min(100, m ? v / m * 100 : 0)) + "%";
+const fmt = n => Math.round(n * 10) / 10;
+function dur(ticks) { if (ticks < 0) return "∞"; const s = Math.floor(ticks / 20); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+
+function render(s) {
+  state = s;
+  $("offline").classList.toggle("show", !s.inGame);
+  if (!s.inGame) return;
+  const nl = (s.lang || "").startsWith("ru") ? "ru" : "en";
+  if (nl !== lang) { lang = nl; applyLang(); }
+
+  $("pname").textContent = s.name;
+  $("xyz").textContent = `${s.x} ${s.y} ${s.z}`;
+  $("biome").textContent = s.biome || s.dim;
+  const h = (Math.floor(s.time / 1000) + 6) % 24, m = Math.floor((s.time % 1000) * 60 / 1000);
+  $("day").textContent = s.day + 1;
+  $("clock").textContent = String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0");
+  $("weather").textContent = t(s.weather);
+  $("fps").textContent = s.fps;
+
+  const total = s.maxHp + s.absorb;
+  $("hpT").textContent = fmt(s.hp) + (s.absorb ? " +" + fmt(s.absorb) : "") + " / " + fmt(s.maxHp);
+  $("hpB").style.width = pct(s.hp, total); $("abB").style.width = pct(s.absorb, total);
+  $("foodT").textContent = s.food + " / 20"; $("foodB").style.width = pct(s.food, 20);
+  $("satT").textContent = fmt(s.sat); $("satB").style.width = pct(s.sat, 20);
+  $("armorT").textContent = s.armor + " / 20"; $("armorB").style.width = pct(s.armor, 20);
+  $("airRow").hidden = s.air >= s.maxAir;
+  $("airT").textContent = Math.max(0, Math.ceil(s.air / 20)) + "s"; $("airB").style.width = pct(s.air, s.maxAir);
+  $("lvl").textContent = s.xpLevel; $("xpT").textContent = Math.round(s.xp * 100) + "%"; $("xpB").style.width = pct(s.xp, 1);
+
+  $("effects").innerHTML = s.effects.length ? s.effects.map(e => {
+    const id = (e.id || "minecraft:x").replace(":", "/mob_effect/");
+    return `<div class="fx ${e.good ? "" : "bad"}"><img src="tex/${id}" alt="" onerror="this.style.visibility='hidden'">
+      <span>${esc(e.name)}${e.amp ? " " + (e.amp + 1) : ""}</span><span class="t">${dur(e.dur)}</span></div>`;
+  }).join("") : `<span class="empty">${t("noEffects")}</span>`;
+
+  const bySlot = {}; s.inv.forEach(it => bySlot[it.s] = it);
+  for (const i in slots) { renderSlot(+i, bySlot[i]); slots[i].classList.toggle("sel", +i === s.selected); }
+
+  const tg = s.target;
+  $("target").innerHTML = !tg ? `<span class="empty">—</span>` :
+    `<div class="h">${tg.icon ? `<img src="${iconUrl(tg.icon)}" alt="" onerror="this.remove()">` : ""}
+      <div><div class="name">${esc(tg.name)}</div><div class="mod">${esc(tg.mod)}${tg.pos ? " · " + tg.pos : ""}</div></div></div>
+     ${tg.hp != null ? `<div class="stat" style="margin-top:10px"><div class="bar"><i style="background:var(--hp);width:${pct(tg.hp, tg.maxHp)}"></i></div><div class="top"><span></span><b>${fmt(tg.hp)} / ${fmt(tg.maxHp)}</b></div></div>` : ""}
+     ${tg.lines ? `<pre>${tg.lines.map(esc).join("\n")}</pre>` : ""}`;
+}
+
+// live data
+function connect() {
+  const es = new EventSource("events");
+  es.onopen = () => $("dot").classList.add("on");
+  es.onmessage = e => render(JSON.parse(e.data));
+  es.onerror = () => { $("dot").classList.remove("on"); $("offline").classList.add("show"); };  // EventSource retries by itself
+}
+connect();
+
+// map: re-fetch every 1.5 s, player arrow in the centre
+let radius = 96, mapImg = null, mapBusy = false;
+const cv = $("map"), cx = cv.getContext("2d");
+function drawMap() {
+  cx.imageSmoothingEnabled = false;
+  cx.fillStyle = "#0a0d10"; cx.fillRect(0, 0, cv.width, cv.height);
+  if (mapImg) cx.drawImage(mapImg, 0, 0, cv.width, cv.height);
+  if (!state || !state.inGame) return;
+  cx.save(); cx.translate(cv.width / 2, cv.height / 2); cx.rotate((state.yaw + 180) * Math.PI / 180);
+  cx.scale(2, 2);
+  cx.beginPath(); cx.moveTo(0, -16); cx.lineTo(11, 12); cx.lineTo(0, 6); cx.lineTo(-11, 12); cx.closePath();
+  cx.fillStyle = "#fff"; cx.strokeStyle = "#000"; cx.lineWidth = 3; cx.stroke(); cx.fill(); cx.restore();
+}
+function refreshMap() {
+  if (mapBusy || document.hidden || !state || !state.inGame) return;
+  mapBusy = true;
+  const img = new Image();
+  img.onload = () => { mapImg = img; mapBusy = false; drawMap(); };
+  img.onerror = () => { mapBusy = false; };
+  img.src = "map.png?r=" + radius + "&t=" + Date.now();
+}
+setInterval(refreshMap, 1500);
+setInterval(drawMap, 200);
+document.querySelectorAll("[data-r]").forEach(b => b.onclick = () => {
+  radius = +b.dataset.r; document.querySelectorAll("[data-r]").forEach(x => x.classList.toggle("on", x === b));
+  mapImg = null; refreshMap();
+});
+$("mapBig").onclick = () => { $("mapwrap").classList.toggle("big"); $("mapBig").textContent = $("mapwrap").classList.contains("big") ? "✕" : "⛶"; };
+
+// ---- recipes tab (JEI) ----
+function showView(v) {
+  document.querySelectorAll(".view").forEach(x => x.hidden = x.id !== v);
+  document.querySelectorAll("[data-view]").forEach(b => b.classList.toggle("on", b.dataset.view === v));
+}
+document.querySelectorAll("[data-view]").forEach(b => b.onclick = () => showView(b.dataset.view));
+
+let rItem = null, rMode = "craft", rSeq = 0;
+async function openRecipes(id, name, mode) {
+  rItem = { id, name }; rMode = mode || rMode;
+  document.querySelectorAll("[data-mode]").forEach(b => b.classList.toggle("on", b.dataset.mode === rMode));
+  $("rIcon").src = iconUrl(id); $("rIcon").hidden = false; $("rName").textContent = name;
+  const seq = ++rSeq, path = id.replace(":", "/");
+  $("rlist").innerHTML = `<span class="empty">${t("loading")}</span>`;
+  let list;
+  try { list = await (await fetch(`recipes/${rMode}/${path}`)).json(); } catch { list = []; }
+  if (seq !== rSeq) return;
+  if (list.noJei) { $("rlist").innerHTML = `<span class="empty">${t("noJei")}</span>`; return; }
+  if (!list.length) { $("rlist").innerHTML = `<span class="empty">${t("noRecipes")}</span>`; return; }
+  // load images one at a time: each one is rendered on the game thread, don't flood it
+  $("rlist").innerHTML = list.map((r, i) => `<div class="rec"><div class="t">${esc(r.title)}</div>
+    <img data-src="recipe/${rMode}/${i}/${path}" width="${(r.w + 8) * 2}" height="${(r.h + 8) * 2}" alt=""></div>`).join("");
+  for (const img of $("rlist").querySelectorAll("img")) {
+    if (seq !== rSeq) return;
+    await new Promise(res => { img.onload = img.onerror = res; img.src = img.dataset.src; });
+  }
+}
+document.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => rItem && openRecipes(rItem.id, rItem.name, b.dataset.mode));
+
+let qTimer;
+$("q").addEventListener("input", () => {
+  clearTimeout(qTimer);
+  qTimer = setTimeout(async () => {
+    const q = $("q").value.trim();
+    let items = [];
+    if (q.length >= 2) try { items = await (await fetch("items?q=" + encodeURIComponent(q))).json(); } catch {}
+    $("results").innerHTML = items.map(it => `<div class="slot" data-id="${esc(it.id)}" data-name="${esc(it.name)}" title="${esc(it.name)}">
+      <img loading="lazy" src="${iconUrl(it.id)}" alt="" onerror="this.outerHTML='<span class=ab>${ab(it.id)}</span>'"></div>`).join("");
+  }, 250);
+});
+$("results").addEventListener("click", e => {
+  const d = e.target.closest(".slot"); if (d) openRecipes(d.dataset.id, d.dataset.name);
+});
+
+$("fs").onclick = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.();
+applyLang();
+</script>
+</body>
+</html>
