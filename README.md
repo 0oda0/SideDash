@@ -1,69 +1,89 @@
 # SideDash
 
-A second-screen dashboard for games. Open it in your tablet's browser and see your inventory, stats, map and recipes while you play. Inspired by sim-racing dashboards, but for non-racing games.
+Второй экран для игр. Открываешь страницу в браузере планшета и во время игры видишь инвентарь, состояние персонажа, карту, рецепты и многое другое. Идея как у дашбордов для симрейсинга, только для обычных игр.
 
-First game: **Minecraft 1.21.1 (NeoForge)**, built for Create.
+Первая игра: **Minecraft 1.21.1 (NeoForge)**, с упором на Create.
 
-![In game: Create goggles on the press](docs/game-goggles.jpg)
-![Same moment on the tablet](docs/tablet-overview.png)
+![В игре: очки Create показывают нагрузку пресса](docs/game-goggles.jpg)
+![Тот же момент на планшете](docs/tablet-overview.png)
 
-| Recipes (JEI) | World map with waypoints |
+| Рецепты (JEI) | Карта мира с метками |
 |---|---|
-| ![Recipes](docs/tablet-recipes.png) | ![Map](docs/tablet-map.jpg) |
+| ![Рецепты](docs/tablet-recipes.png) | ![Карта](docs/tablet-map.jpg) |
 
-![Demo scene](docs/game-scene.jpg)
+![Демо-сцена](docs/game-scene.jpg)
 
-## What's on the tablet
+## Что есть на планшете
 
-- **Vitals**: health with absorption, hunger, saturation, armor, air, XP. Active effects with timers.
-- **Inventory**: real item icons (same render as in game), durability, enchant glow. Tap an item to see its full tooltip. Double-tap a hotbar slot to select it in game.
-- **World map**: every chunk you explore is saved, like a world-map mod. Pan with a finger, pinch to zoom smoothly, fullscreen. Tap to add a waypoint or teleport there. Teleport is a normal `/tp` command, so it needs cheats or op.
-- **Looking at**: the block or mob under your crosshair. For Create blocks (and any addon that supports engineer's goggles) it shows the goggle info: speed, stress, fluids and so on.
-- **Recipes (JEI)**: search any item, then see "how to make" and "used in". Recipes are drawn by JEI itself, so every Create and addon recipe type is supported.
-- The UI follows the game's language (Russian or English).
+**Обзор**
+- **Состояние:** здоровье с поглощением, голод, насыщение, броня, воздух, опыт. Активные эффекты с таймерами.
+- **Инвентарь:** настоящие иконки предметов (тот же рендер, что в игре), прочность, зачарования. Тап по предмету показывает полное описание и кнопки: перекинуть (как Shift-клик), переложить в другой слот, выбросить, посмотреть рецепт. Двойной тап по хотбару выбирает слот в игре.
+- **Открытый сундук:** пока в игре открыт сундук, бочка или другой контейнер, его содержимое видно над инвентарём.
+- **Карта мира:** каждый исследованный чанк сохраняется, как в модах на карту мира. Плавный зум щипком, перемещение пальцем, полноэкранный режим. Тап по карте ставит метку или телепортирует туда. Телепорт идёт обычной командой `/tp`, поэтому нужны читы или права оператора. На карте видны другие игроки и точка последней смерти.
+- **Смотришь на:** блок или моб под прицелом. Для блоков Create (и аддонов, которые поддерживают инженерные очки) показывается информация очков: скорость, нагрузка, жидкости и так далее.
+- **Закреплённые блоки:** закрепи любой блок, и его показания очков будут видны на планшете постоянно. Получается приборная панель завода.
+- **Предупреждения:** мало здоровья, голод, заканчивается воздух, смерть. Планшет показывает плашку, вибрирует и пищит.
 
-## How it works
+**Рецепты (JEI)**
+- Поиск любого предмета, «Как сделать» и «Где используется». Рецепты рисует сам JEI, поэтому поддерживаются все типы рецептов Create и аддонов.
+- **Где лежит:** мод запоминает содержимое сундуков, которые ты открывал, и показывает, в каких из них лежит предмет. Кнопка «На карте» показывает, где этот сундук.
 
-SideDash has two parts:
+**Чат**
+- Чат игры на планшете. Можно писать сообщения и команды.
 
-- **SideDash Hub**: a small Windows app you install once. It lives in the tray, shows a QR code for the tablet, and serves everything on your LAN (`http://<pc-ip>:25580/<key>/`). The random key keeps other devices on the network out.
-- **Game adapters**: one per game. They run a localhost-only server and register with the hub through a file in `%LOCALAPPDATA%\SideDash\sources`. Each adapter ships its own dashboard page, and the hub proxies the tablet to it. For Minecraft the adapter is the SideDash mod (client-only: singleplayer and any server).
+**Пульт** (кнопка 🎛)
+- Сетка своих кнопок, как Stream Deck. Кнопка может нажать любую клавишу из настроек игры (включая клавиши модов), выполнить команду или нажать сочетание клавиш в Windows. Сочетания работают с любой игрой, даже без адаптера. Раскладка своя для каждой игры и редактируется прямо на планшете.
 
-## How to use
+Экран планшета не гаснет, пока открыт дашборд. Интерфейс подстраивается под язык игры (русский или английский).
 
-1. Start **SideDashHub.exe**. Allow it in Windows Firewall when asked (private networks).
-2. Scan the QR code from the hub window with your tablet (same Wi-Fi).
-3. Start Minecraft with the mod and join a world. The tablet switches to the game by itself. `/sidedash` in chat shows the address again.
+## Как это устроено
 
-## Modpack (CurseForge)
+SideDash состоит из двух частей:
 
-`modpack/` builds a CurseForge import zip: Create 6, about 20 popular Create addons, JEI, Jade, Xaero's Minimap and World Map, plus Sodium, ModernFix and FerriteCore for performance.
+- **SideDash Hub** — небольшая программа для Windows, ставится один раз. Живёт в трее, показывает QR-код для планшета и раздаёт всё по локальной сети (`http://<ip-пк>:25580/<ключ>/`). Случайный ключ в адресе не пускает другие устройства в сети.
+- **Адаптеры игр** — по одному на игру. Адаптер поднимает сервер только на `127.0.0.1` и регистрируется в хабе файлом в `%LOCALAPPDATA%\SideDash\sources`. Каждый адаптер приносит свою страницу дашборда, а хаб пересылает к ней запросы планшета. Для Minecraft адаптер — это мод SideDash. Он клиентский: работает в одиночной игре и на любом сервере.
+
+## Как пользоваться
+
+1. Запусти **SideDashHub.exe**. Когда Windows спросит про брандмауэр, разреши доступ для частных сетей.
+2. Отсканируй планшетом QR-код из окна хаба. Планшет должен быть в той же Wi-Fi сети.
+3. Запусти Minecraft с модом и зайди в мир. Планшет сам переключится на игру. Команда `/sidedash` в чате снова покажет адрес.
+
+## Сборка модов (CurseForge)
+
+`modpack/` собирает архив для импорта в CurseForge: Create 6, около 20 популярных аддонов к нему, JEI, Jade, Xaero's Minimap и World Map, плюс Sodium, ModernFix и FerriteCore для производительности.
 
 ```
-python modpack/resolve.py            # pick latest 1.21.1 NeoForge versions + dependencies -> manifest.json
+python modpack/resolve.py            # последние версии под 1.21.1 NeoForge + зависимости -> manifest.json
 ./gradlew build
-python modpack/pack.py               # -> modpack/SideDash-Create-Pack-<ver>.zip
+python modpack/pack.py               # -> modpack/SideDash-Create-Pack-<версия>.zip
 ```
 
-In CurseForge: **Create Custom Profile → Import** and select the zip. Pre-built zips are on the Releases page.
+В CurseForge: **Создать свой профиль → Импорт** и выбрать архив. Готовые архивы лежат на странице Releases.
 
-Left out on purpose:
+Сознательно не вошли:
 
-- Create Aeronautics and Create Stuff 'N Additions: their CurseForge ids can't be resolved automatically yet.
-- Bits 'n' Bobs: it refuses to load next to TFMG 1.2.0.
+- Create Aeronautics и Create Stuff 'N Additions: их пока не получается автоматически найти на CurseForge.
+- Bits 'n' Bobs: отказывается загружаться вместе с TFMG 1.2.0.
 
-## Development
+## Разработка
 
-- JDK 21. `./gradlew runClient` starts a dev client; put test mods in `run/mods`.
-- `./gradlew runClient -PquickWorld=<save folder>` loads a world directly.
-- Code map:
-  - `hub/`: .NET 9 tray app (Kestrel + WinForms): LAN server, QR, adapter registry, reverse proxy.
-  - `WebServer`: the mod's tiny localhost HTTP server, java.base only. Live data goes over Server-Sent Events.
-  - `GameData`: all game reads, always run on the client thread.
-  - `Render`: offscreen render to PNG, used for icons and recipes.
-  - `SideDashJei`: optional JEI bridge.
-  - Dashboard page: `src/main/resources/web/index.html`.
+- Мод: JDK 21. `./gradlew runClient` запускает игру для разработки, тестовые моды кладутся в `run/mods`. `./gradlew runClient -PquickWorld=<папка сохранения>` сразу загружает мир.
+- Хаб: .NET 9. `dotnet build hub` или `dotnet publish hub -c Release`.
+- Где что лежит:
+  - `hub/` — программа в трее (Kestrel + WinForms): сервер в локальной сети, QR-код, реестр адаптеров, прокси, пульт (`deck.html`, `Keys.cs`) и общий скрипт для страниц игр (`hub.js`).
+  - `WebServer` — маленький HTTP-сервер мода на `127.0.0.1`, только `java.base`. Живые данные идут через Server-Sent Events.
+  - `GameData` — всё чтение данных из игры, всегда на клиентском потоке.
+  - `WorldMap` — тайлы карты мира, метки, телепорт.
+  - `Memory` — чат, память сундуков, закреплённые блоки.
+  - `Deck` — действия Minecraft для пульта.
+  - `Render` — рендер в картинку вне экрана, для иконок и рецептов.
+  - `SideDashJei` — необязательная связка с JEI.
+  - Страница дашборда: `src/main/resources/web/index.html`.
 
-## Roadmap
+## Планы
 
-- More games: Baldur's Gate 3 (journal and inventory through Script Extender), Green Hell (stats through a BepInEx mod).
+- Поезда Create на карте.
+- 3D-просмотр схематик Create по слоям со списком материалов.
+- Свой макет плиток на планшете.
+- Другие игры: Baldur's Gate 3 (дневник и инвентарь через Script Extender), Green Hell (показатели через мод на BepInEx).
