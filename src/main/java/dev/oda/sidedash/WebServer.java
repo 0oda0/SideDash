@@ -56,7 +56,34 @@ final class WebServer {
             else if (path.equals("/events")) events(s, out);
             else if (path.startsWith("/icon/")) png(out, GameData.icon(path.substring(6)), true);
             else if (path.startsWith("/tex/")) png(out, GameData.texture(path.substring(5)), true);
-            else if (path.equals("/map.png")) png(out, GameData.map(intParam(query, "r", 96)), false);
+            else if (path.startsWith("/lib/") && !path.contains("..")) {
+                try (InputStream f = WebServer.class.getResourceAsStream("/web" + path)) {
+                    if (f == null) send(out, 404, "text/plain", NOT_FOUND, "");
+                    else send(out, 200, path.endsWith(".css") ? "text/css" : "text/javascript", f.readAllBytes(), "Cache-Control: max-age=86400\r\n");
+                }
+            }
+            else if (path.startsWith("/tile/")) {
+                // /tile/<dim>/<tx>/<tz>.png
+                String[] p = path.substring(6).replace(".png", "").split("/");
+                byte[] b = WorldMap.tilePng(p[0], Integer.parseInt(p[1]), Integer.parseInt(p[2]));
+                if (b == null) send(out, 204, "image/png", new byte[0], "Cache-Control: no-store\r\n");
+                else send(out, 200, "image/png", b, "Cache-Control: no-cache\r\n");
+            }
+            else if (path.equals("/waypoints")) json(out, WorldMap.waypointsJson());
+            else if (method.equals("POST") && path.equals("/waypoint/add")) {
+                WorldMap.addWaypoint(java.net.URLDecoder.decode(param(query, "name"), StandardCharsets.UTF_8),
+                        intParam(query, "x", 0), intParam(query, "z", 0));
+                json(out, WorldMap.waypointsJson());
+            }
+            else if (method.equals("POST") && path.startsWith("/waypoint/del/")) {
+                WorldMap.deleteWaypoint(path.substring(14));
+                json(out, WorldMap.waypointsJson());
+            }
+            else if (method.equals("POST") && path.equals("/tp")) {
+                String wp = param(query, "wp");
+                WorldMap.teleport(intParam(query, "x", 0), wp.isEmpty() ? null : WorldMap.waypointY(wp), intParam(query, "z", 0));
+                send(out, 204, "text/plain", new byte[0], "");
+            }
             else if (path.equals("/items"))
                 json(out, GameData.search(java.net.URLDecoder.decode(param(query, "q"), StandardCharsets.UTF_8)));
             else if (path.startsWith("/recipes/craft/") || path.startsWith("/recipes/uses/"))

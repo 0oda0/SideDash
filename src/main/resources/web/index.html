@@ -7,6 +7,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#101418">
 <title>SideDash</title>
+<link rel="stylesheet" href="lib/leaflet.css">
+<script src="lib/leaflet.js"></script>
 <style>
 :root {
   --bg: #0e1215; --panel: #161c21; --panel2: #1d252c; --line: #2a343d;
@@ -73,13 +75,23 @@ h2 { margin: 0 0 10px; font-size: 12px; letter-spacing: .08em; text-transform: u
 
 /* map + target */
 .mapwrap { position: relative; aspect-ratio: 1; width: 100%; background: #0a0d10; border-radius: 10px; overflow: hidden; }
-canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
-.mapbtns { position: absolute; top: 8px; right: 8px; display: flex; gap: 6px; }
-.mapbtns button { background: #000a; backdrop-filter: blur(4px); min-width: 40px; }
-.mapwrap.big { position: fixed; inset: 0; z-index: 4; aspect-ratio: auto; border-radius: 0; display: grid; place-items: center; }
-.mapwrap.big canvas { width: min(100vw, 100vh); height: min(100vw, 100vh); }
+#map { position: absolute; inset: 0; background: #0a0d10; }
+.leaflet-tile { image-rendering: pixelated; }
+.mapbtns { position: absolute; top: 8px; right: 8px; display: flex; gap: 6px; z-index: 1000; }
+.mapbtns button { background: #000a; backdrop-filter: blur(4px); min-width: 44px; font-size: 18px; }
+.mapwrap.big { position: fixed; inset: 0; z-index: 4; aspect-ratio: auto; border-radius: 0; }
 .mapwrap.big .mapbtns { top: 16px; right: 16px; }
-.mapwrap.big .mapbtns button { font-size: 20px; padding: 10px 16px; }
+.mapwrap.big .mapbtns button { font-size: 22px; padding: 10px 18px; }
+.leaflet-bar a { background: var(--panel2); color: var(--text); border-color: var(--line) !important; }
+.leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--panel2); color: var(--text); border: 1px solid var(--line); }
+.leaflet-popup-content { margin: 12px 14px; font: 14px/1.4 system-ui, sans-serif; }
+.leaflet-container a.leaflet-popup-close-button { color: var(--dim); }
+.pop .l { color: var(--dim); margin: 2px 0 10px; }
+.pop .acts { display: flex; gap: 8px; }
+.me svg { transition: transform .2s; }
+.wp i { display: block; width: 14px; height: 14px; border-radius: 50%; background: var(--absorb); border: 2px solid #000; }
+.wp span { position: absolute; left: 18px; top: -3px; white-space: nowrap; font: 600 13px system-ui, sans-serif; color: #fff;
+  text-shadow: 0 0 3px #000, 0 0 3px #000; }
 .target .h { display: flex; gap: 10px; align-items: center; }
 .target img { width: 36px; height: 36px; image-rendering: pixelated; object-fit: cover; object-position: top; }
 .target .name { font-weight: 700; font-size: 16px; }
@@ -173,9 +185,8 @@ input[type=search]:focus { border-color: var(--accent); }
   <section class="col">
     <div class="card">
       <h2 data-t="map">Map</h2>
-      <div class="mapwrap" id="mapwrap"><canvas id="map" width="1024" height="1024"></canvas>
-        <div class="mapbtns"><button data-r="48">+</button><button data-r="96" class="on">◎</button><button data-r="192">−</button><button data-r="256">−−</button>
-          <button id="mapBig">⛶</button></div></div>
+      <div class="mapwrap" id="mapwrap"><div id="map"></div>
+        <div class="mapbtns"><button id="mapFollow" class="on">◎</button><button id="mapBig">⛶</button></div></div>
     </div>
     <div class="card target" style="flex:1">
       <h2 data-t="lookingAt">Looking at</h2>
@@ -199,7 +210,7 @@ input[type=search]:focus { border-color: var(--accent); }
 <div class="offline show" id="offline"><div><b data-t="waiting">Waiting for the game…</b><span data-t="waitingHint">Load a world in Minecraft. This page reconnects by itself.</span></div></div>
 
 <script>
-const L = {
+const I18N = {
   en: {},
   ru: { day: "День", fullscreen: "Полный экран", vitals: "Состояние", health: "Здоровье", food: "Голод", saturation: "Насыщение",
     armor: "Броня", air: "Воздух", level: "Уровень", effects: "Эффекты", inventory: "Инвентарь", map: "Карта",
@@ -207,14 +218,16 @@ const L = {
     tapHint: "Тапни по предмету, чтобы увидеть описание. Двойной тап по хотбару выбирает слот в игре.",
     noEffects: "Нет эффектов", overview: "Обзор", recipes: "Рецепты", howToMake: "Как сделать", usedIn: "Где используется",
     searchPh: "Поиск предмета…", pickItem: "Выбери предмет слева или тапни по нему в инвентаре.", noRecipes: "Рецептов не найдено",
-    noJei: "Для рецептов нужен мод JEI", loading: "Загрузка…", clear: "Ясно", rain: "Дождь", thunder: "Гроза", nothing: "—" }
+    noJei: "Для рецептов нужен мод JEI", loading: "Загрузка…", addMark: "Метка здесь", markName: "Название метки:",
+    tpHere: "Телепорт сюда", tp: "Телепорт", del: "Удалить", delQ: "Удалить метку", blocks: "блоков", clear: "Ясно", rain: "Дождь", thunder: "Гроза", nothing: "—" }
 };
 let lang = navigator.language.startsWith("ru") ? "ru" : "en";
-const t = k => (L[lang] && L[lang][k]) || ({ noRecipes: "No recipes found", noJei: "Recipes need the JEI mod installed", loading: "Loading…",
-  howToMake: "How to make", usedIn: "Used in", noEffects: "No effects", clear: "Clear", rain: "Rain", thunder: "Thunder", nothing: "—" })[k] || k;
+const t = k => (I18N[lang] && I18N[lang][k]) || ({ noRecipes: "No recipes found", noJei: "Recipes need the JEI mod installed", loading: "Loading…",
+  howToMake: "How to make", usedIn: "Used in", addMark: "Mark here", markName: "Waypoint name:", tpHere: "Teleport here",
+  tp: "Teleport", del: "Delete", delQ: "Delete waypoint", blocks: "blocks", noEffects: "No effects", clear: "Clear", rain: "Rain", thunder: "Thunder", nothing: "—" })[k] || k;
 function applyLang() {
-  document.querySelectorAll("[data-t]").forEach(e => { const v = L[lang][e.dataset.t]; if (v) e.textContent = v; });
-  document.querySelectorAll("[data-tp]").forEach(e => { const v = L[lang][e.dataset.tp]; if (v) e.placeholder = v; });
+  document.querySelectorAll("[data-t]").forEach(e => { const v = I18N[lang][e.dataset.t]; if (v) e.textContent = v; });
+  document.querySelectorAll("[data-tp]").forEach(e => { const v = I18N[lang][e.dataset.tp]; if (v) e.placeholder = v; });
 }
 
 const $ = id => document.getElementById(id);
@@ -269,6 +282,7 @@ function render(s) {
   state = s;
   $("offline").classList.toggle("show", !s.inGame);
   if (!s.inGame) return;
+  updateMap(s);
   const nl = (s.lang || "").startsWith("ru") ? "ru" : "en";
   if (nl !== lang) { lang = nl; applyLang(); }
 
@@ -317,34 +331,83 @@ function connect() {
 }
 connect();
 
-// map: re-fetch every 1.5 s, player arrow in the centre
-let radius = 96, mapImg = null, mapBusy = false;
-const cv = $("map"), cx = cv.getContext("2d");
-function drawMap() {
-  cx.imageSmoothingEnabled = false;
-  cx.fillStyle = "#0a0d10"; cx.fillRect(0, 0, cv.width, cv.height);
-  if (mapImg) cx.drawImage(mapImg, 0, 0, cv.width, cv.height);
-  if (!state || !state.inGame) return;
-  cx.save(); cx.translate(cv.width / 2, cv.height / 2); cx.rotate((state.yaw + 180) * Math.PI / 180);
-  cx.scale(2, 2);
-  cx.beginPath(); cx.moveTo(0, -16); cx.lineTo(11, 12); cx.lineTo(0, 6); cx.lineTo(-11, 12); cx.closePath();
-  cx.fillStyle = "#fff"; cx.strokeStyle = "#000"; cx.lineWidth = 3; cx.stroke(); cx.fill(); cx.restore();
+// ---- world map (Leaflet): 1 map unit = 1 block, latlng = [-z, x], tiles are 256 blocks ----
+const ll = (x, z) => L.latLng(-z, x);
+const lmap = L.map("map", { crs: L.CRS.Simple, zoomSnap: 0, zoomDelta: 0.5, wheelPxPerZoomLevel: 90,
+  minZoom: -4, maxZoom: 4, attributionControl: false }).setView([0, 0], 1);
+const EMPTY = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+let dim = "";
+const tiles = L.tileLayer("tile/{dim}/{x}/{y}.png", { dim: () => dim, tileSize: 256, minNativeZoom: 0, maxNativeZoom: 0,
+  errorTileUrl: EMPTY, keepBuffer: 4 }).addTo(lmap);
+const me = L.marker([0, 0], { interactive: false, zIndexOffset: 1000,
+  icon: L.divIcon({ className: "me", iconSize: [36, 36], html: `<svg viewBox="-18 -18 36 36" width="36" height="36"><path d="M0-15 11 12 0 6-11 12Z" fill="#fff" stroke="#000" stroke-width="3" stroke-linejoin="round"/></svg>` }) }).addTo(lmap);
+const wpLayer = L.layerGroup().addTo(lmap);
+let follow = true, waypoints = [];
+
+lmap.on("dragstart", () => setFollow(false));
+function setFollow(f) { follow = f; $("mapFollow").classList.toggle("on", f); if (f && state && state.inGame) lmap.panTo(ll(state.x + .5, state.z + .5)); }
+$("mapFollow").onclick = () => setFollow(true);
+$("mapBig").onclick = () => {
+  const big = $("mapwrap").classList.toggle("big");
+  $("mapBig").textContent = big ? "✕" : "⛶";
+  setTimeout(() => lmap.invalidateSize(), 50);
+};
+
+function updateMap(s) {
+  if (s.dimKey && s.dimKey !== dim) { dim = s.dimKey; tiles.redraw(); drawWaypoints(); }
+  me.setLatLng(ll(s.x + .5, s.z + .5));
+  const el = me.getElement(); if (el) el.firstChild.style.transform = `rotate(${s.yaw + 180}deg)`;
+  if (follow) lmap.panTo(ll(s.x + .5, s.z + .5), { animate: false });
 }
-function refreshMap() {
-  if (mapBusy || document.hidden || !state || !state.inGame) return;
-  mapBusy = true;
-  const img = new Image();
-  img.onload = () => { mapImg = img; mapBusy = false; drawMap(); };
-  img.onerror = () => { mapBusy = false; };
-  img.src = "map.png?r=" + radius + "&t=" + Date.now();
+// newly explored chunks: re-fetch the tiles around the player
+setInterval(() => {
+  if (!state || !state.inGame || document.hidden) return;
+  const tx = Math.floor(state.x / 256), tz = Math.floor(state.z / 256);
+  for (const t of Object.values(tiles._tiles))
+    if (Math.abs(t.coords.x - tx) <= 1 && Math.abs(t.coords.y - tz) <= 1) t.el.src = tiles.getTileUrl(t.coords) + "?t=" + Date.now();
+}, 4000);
+
+function btn(label, fn) { const b = document.createElement("button"); b.textContent = label; b.onclick = fn; return b; }
+function popupBox(title, sub, buttons) {
+  const d = document.createElement("div"); d.className = "pop";
+  d.innerHTML = `<b>${esc(title)}</b><div class="l">${esc(sub)}</div>`;
+  const row = document.createElement("div"); row.className = "acts"; buttons.forEach(b => row.appendChild(b)); d.appendChild(row);
+  return d;
 }
-setInterval(refreshMap, 1500);
-setInterval(drawMap, 200);
-document.querySelectorAll("[data-r]").forEach(b => b.onclick = () => {
-  radius = +b.dataset.r; document.querySelectorAll("[data-r]").forEach(x => x.classList.toggle("on", x === b));
-  mapImg = null; refreshMap();
+const post = url => fetch(url, { method: "POST" });
+const dist = (x, z) => state ? Math.round(Math.hypot(x - state.x, z - state.z)) : 0;
+
+lmap.on("click", e => {
+  const x = Math.floor(e.latlng.lng), z = Math.floor(-e.latlng.lat);
+  const buttons = [btn(t("addMark"), async () => {
+    const name = prompt(t("markName"), "");
+    if (name === null) return;
+    waypoints = await (await post(`waypoint/add?x=${x}&z=${z}&name=${encodeURIComponent(name)}`)).json();
+    drawWaypoints(); lmap.closePopup();
+  })];
+  if (state && state.canTp) buttons.push(btn(t("tpHere"), () => { post(`tp?x=${x}&z=${z}`); lmap.closePopup(); setFollow(true); }));
+  L.popup().setLatLng(e.latlng).setContent(popupBox(`X ${x}  Z ${z}`, `${dist(x, z)} ${t("blocks")}`, buttons)).openOn(lmap);
 });
-$("mapBig").onclick = () => { $("mapwrap").classList.toggle("big"); $("mapBig").textContent = $("mapwrap").classList.contains("big") ? "✕" : "⛶"; };
+
+function drawWaypoints() {
+  wpLayer.clearLayers();
+  for (const w of waypoints.filter(w => w.dim === dim)) {
+    const m = L.marker(ll(w.x + .5, w.z + .5), { icon: L.divIcon({ className: "wp", iconSize: [14, 14],
+      html: `<i></i><span>${esc(w.name)}</span>` }) }).addTo(wpLayer);
+    m.on("click", ev => {
+      L.DomEvent.stopPropagation(ev);
+      const buttons = [];
+      if (state && state.canTp) buttons.push(btn(t("tp"), () => { post(`tp?x=${w.x}&z=${w.z}&wp=${w.id}`); lmap.closePopup(); setFollow(true); }));
+      buttons.push(btn(t("del"), async () => {
+        if (!confirm(t("delQ") + " " + w.name + "?")) return;
+        waypoints = await (await post("waypoint/del/" + w.id)).json(); drawWaypoints(); lmap.closePopup();
+      }));
+      L.popup().setLatLng(m.getLatLng()).setContent(popupBox(w.name, `${w.x} ${w.y} ${w.z} · ${dist(w.x, w.z)} ${t("blocks")}`, buttons)).openOn(lmap);
+    });
+  }
+}
+async function loadWaypoints() { try { waypoints = await (await fetch("waypoints")).json(); drawWaypoints(); } catch {} }
+setInterval(loadWaypoints, 10000);
 
 // ---- recipes tab (JEI) ----
 function showView(v) {
@@ -392,6 +455,7 @@ $("results").addEventListener("click", e => {
 
 $("fs").onclick = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.();
 applyLang();
+loadWaypoints();
 </script>
 </body>
 </html>

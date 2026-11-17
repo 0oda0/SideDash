@@ -43,7 +43,7 @@ final class GameData {
     private static final Map<String, byte[]> ICONS = new ConcurrentHashMap<>();
     private static final Map<Class<?>, Optional<Method>> GOGGLES = new ConcurrentHashMap<>();
 
-    private static <T> T onMain(Supplier<T> f) {
+    static <T> T onMain(Supplier<T> f) {
         Minecraft mc = Minecraft.getInstance();
         if (mc == null) return null;
         try {
@@ -67,6 +67,8 @@ final class GameData {
         JsonObject o = new JsonObject();
         o.addProperty("inGame", true);
         o.addProperty("lang", mc.getLanguageManager().getSelected());
+        o.addProperty("dimKey", WorldMap.dimKey());
+        o.addProperty("canTp", p.hasPermissions(2));
         o.addProperty("name", p.getName().getString());
         o.addProperty("hp", p.getHealth());
         o.addProperty("maxHp", p.getMaxHealth());
@@ -298,58 +300,4 @@ final class GameData {
         try (InputStream in = r.get().open()) { return in.readAllBytes(); } catch (Exception e) { return null; }
     }
 
-    /** Top-down map around the player from loaded client chunks, vanilla map colours + height shading. 1px = 1 block, north up. */
-    static byte[] map(int radius) {
-        int r = Math.max(16, Math.min(256, radius));
-        return onMain(() -> {
-            Minecraft mc = Minecraft.getInstance();
-            LocalPlayer p = mc.player;
-            ClientLevel lv = mc.level;
-            if (p == null || lv == null) return null;
-            int size = r * 2, cx = p.getBlockX() - r, cz = p.getBlockZ() - r;
-            boolean ceiling = lv.dimensionType().hasCeiling();
-            int[] prevRow = new int[size];
-            BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-            try (NativeImage img = new NativeImage(size, size, true)) {
-                for (int dz = -1; dz < size; dz++) {
-                    for (int dx = 0; dx < size; dx++) {
-                        int x = cx + dx, z = cz + dz;
-                        if (!lv.hasChunk(x >> 4, z >> 4)) { prevRow[dx] = Integer.MIN_VALUE; continue; }
-                        int y = ceiling ? caveSurface(lv, pos, x, z, p.getBlockY()) : lv.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
-                        pos.set(x, y, z);
-                        BlockState st = lv.getBlockState(pos);
-                        // look through water to shade by depth like vanilla maps
-                        int depth = 0;
-                        while (!st.getFluidState().isEmpty() && depth < 12 && y - depth > lv.getMinBuildHeight()) {
-                            depth++;
-                            st = lv.getBlockState(pos.set(x, y - depth, z));
-                        }
-                        if (depth > 0) st = lv.getBlockState(pos.set(x, y, z));
-                        int north = prevRow[dx];
-                        prevRow[dx] = y;
-                        if (dz < 0) continue;
-                        MapColor color = st.getMapColor(lv, pos);
-                        if (color == MapColor.NONE) continue;
-                        MapColor.Brightness br;
-                        if (depth > 0) br = depth > 6 ? MapColor.Brightness.LOW : depth > 2 ? MapColor.Brightness.NORMAL : MapColor.Brightness.HIGH;
-                        else if (north == Integer.MIN_VALUE || north == y) br = MapColor.Brightness.NORMAL;
-                        else br = y > north ? MapColor.Brightness.HIGH : MapColor.Brightness.LOW;
-                        img.setPixelRGBA(dx, dz, color.calculateRGBColor(br));
-                    }
-                }
-                return img.asByteArray();
-            } catch (Exception e) {
-                return null;
-            }
-        });
-    }
-
-    /** Nether/caves: first solid block with air above, scanning down from just above the player. ponytail: 64-block scan cap. */
-    private static int caveSurface(ClientLevel lv, BlockPos.MutableBlockPos pos, int x, int z, int fromY) {
-        int top = fromY + 2;
-        for (int y = top; y > top - 64 && y > lv.getMinBuildHeight(); y--) {
-            if (!lv.getBlockState(pos.set(x, y, z)).isAir() && lv.getBlockState(pos.set(x, y + 1, z)).isAir()) return y;
-        }
-        return top - 64;
-    }
 }
