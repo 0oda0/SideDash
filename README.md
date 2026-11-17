@@ -4,11 +4,20 @@ A second-screen dashboard for games. Open it in your tablet's browser and see yo
 
 First game: **Minecraft 1.21.1 (NeoForge)**, built for Create.
 
+![In game: Create goggles on the press](docs/game-goggles.jpg)
+![Same moment on the tablet](docs/tablet-overview.png)
+
+| Recipes (JEI) | World map with waypoints |
+|---|---|
+| ![Recipes](docs/tablet-recipes.png) | ![Map](docs/tablet-map.jpg) |
+
+![Demo scene](docs/game-scene.jpg)
+
 ## What's on the tablet
 
 - **Vitals**: health with absorption, hunger, saturation, armor, air, XP. Active effects with timers.
 - **Inventory**: real item icons (same render as in game), durability, enchant glow. Tap an item to see its full tooltip. Double-tap a hotbar slot to select it in game.
-- **Map**: top-down map around you, refreshed every 1.5 s. Four zoom levels and a fullscreen mode.
+- **World map**: every chunk you explore is saved, like a world-map mod. Pan with a finger, pinch to zoom smoothly, fullscreen. Tap to add a waypoint or teleport there. Teleport is a normal `/tp` command, so it needs cheats or op.
 - **Looking at**: the block or mob under your crosshair. For Create blocks (and any addon that supports engineer's goggles) it shows the goggle info: speed, stress, fluids and so on.
 - **Recipes (JEI)**: search any item, then see "how to make" and "used in". Recipes are drawn by JEI itself, so every Create and addon recipe type is supported.
 - The UI follows the game's language (Russian or English).
